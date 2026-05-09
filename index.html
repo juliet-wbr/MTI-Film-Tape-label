@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MTI 라벨 검증</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#e8b84b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="라벨검증">
+<!-- iOS 아이콘 (없으면 기본 스크린샷 사용) -->
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Pretendard:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #07090d;
+  --s1:       #0e1118;
+  --s2:       #141820;
+  --s3:       #1c2230;
+  --border:   #252d3d;
+  --border2:  #1a2030;
+  --gold:     #e8b84b;
+  --gold2:    #f5d07a;
+  --gold-dim: #4a3a18;
+  --green:    #27ae60;
+  --green-bg: #071510;
+  --green-b:  #0f3320;
+  --red:      #e74c3c;
+  --red-bg:   #150707;
+  --red-b:    #3d1010;
+  --yellow:   #f39c12;
+  --yel-bg:   #150f04;
+  --yel-b:    #3d2a08;
+  --text:     #dde4ef;
+  --text2:    #8898b0;
+  --text3:    #4a5568;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'Pretendard', 'Noto Sans KR', sans-serif;
+  --r:        14px;
+  --r-sm:     9px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overscroll-behavior:none}
+
+#app{max-width:480px;margin:0 auto;padding-bottom:72px}
+
+/* ── Bottom nav ── */
+#nav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;
+  background:rgba(14,17,24,0.96);
+  border-top:1px solid var(--border);
+  display:grid;grid-template-columns:repeat(3,1fr);
+  backdrop-filter:blur(16px);z-index:200;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.nav-btn{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:10px 0 8px;border:none;background:none;cursor:pointer;
+  font-family:var(--sans);font-size:10px;color:var(--text3);
+  transition:color .2s;position:relative;
+}
+.nav-btn.active{color:var(--gold)}
+.nav-icon{font-size:20px;line-height:1}
+.nav-badge{
+  position:absolute;top:6px;right:calc(50% - 18px);
+  background:var(--red);color:#fff;
+  font-size:9px;font-family:var(--mono);font-weight:700;
+  width:16px;height:16px;border-radius:50%;
+  display:none;align-items:center;justify-content:center;
+}
+.nav-badge.show{display:flex}
+
+/* ── Pages ── */
+.page{display:none;padding:0 0 8px;animation:fadeUp .25s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Page header ── */
+.pg-head{
+  padding:18px 18px 14px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--border2);
+  position:sticky;top:0;z-index:100;
+  background:rgba(7,9,13,0.95);backdrop-filter:blur(12px);
+}
+.logo{
+  width:34px;height:34px;background:var(--gold);border-radius:9px;
+  display:grid;place-items:center;
+  font-family:var(--mono);font-weight:700;font-size:10px;color:#000;
+  letter-spacing:-0.5px;flex-shrink:0;
+}
+.pg-title{font-size:15px;font-weight:700}
+.pg-sub{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:1px}
+
+/* ── Section ── */
+.section{padding:16px 18px}
+.sec-label{
+  font-family:var(--mono);font-size:10px;letter-spacing:2px;
+  color:var(--gold);text-transform:uppercase;
+  margin-bottom:10px;display:flex;align-items:center;gap:8px;
+}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border2)}
+
+/* ── Cards / blocks ── */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.card-body{padding:14px}
+
+/* ── Buttons ── */
+.btn-gold{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  width:100%;padding:15px;
+  background:var(--gold);border:none;border-radius:var(--r-sm);
+  color:#000;font-family:var(--mono);font-size:13px;font-weight:700;
+  letter-spacing:.8px;cursor:pointer;transition:opacity .15s,transform .1s;
+}
+.btn-gold:active{transform:scale(.97);opacity:.85}
+.btn-gold:disabled{opacity:.3;pointer-events:none}
+.btn-ghost{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  width:100%;padding:12px;background:transparent;
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  color:var(--text2);font-family:var(--mono);font-size:12px;
+  cursor:pointer;transition:border-color .15s,color .15s;margin-top:8px;
+}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-sm{
+  padding:7px 12px;background:var(--s3);border:1px solid var(--border);
+  border-radius:6px;color:var(--text2);font-family:var(--mono);font-size:11px;
+  cursor:pointer;white-space:nowrap;
+}
+.btn-sm:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ── Capture zone ── */
+.capture-zone{
+  position:relative;background:var(--s2);
+  border:2px dashed var(--border);border-radius:var(--r);
+  overflow:hidden;aspect-ratio:4/3;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;cursor:pointer;transition:border-color .2s;margin-bottom:12px;
+}
+.capture-zone:active{border-color:var(--gold)}
+.capture-zone.filled{border-style:solid;border-color:var(--gold-dim)}
+.capture-zone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cap-overlay{
+  position:absolute;inset:0;background:rgba(0,0,0,.6);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  transition:opacity .2s;
+}
+.capture-zone.filled .cap-overlay{opacity:0}
+.capture-zone.filled:active .cap-overlay{opacity:1}
+.cap-icon{font-size:36px}
+.cap-hint{font-size:12px;color:var(--text2);font-family:var(--mono)}
+.capture-zone::before,.capture-zone::after{
+  content:'';position:absolute;width:18px;height:18px;
+  border-color:var(--gold);border-style:solid;opacity:.5;z-index:2;
+}
+.capture-zone::before{top:8px;left:8px;border-width:2px 0 0 2px}
+.capture-zone::after{bottom:8px;right:8px;border-width:0 2px 2px 0}
+input[type=file]{display:none}
+
+/* ── Loading ── */
+.loading{display:none;flex-direction:column;align-items:center;gap:12px;padding:24px 0}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:1px}
+
+/* ── Data block ── */
+.data-block{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.data-block-head{padding:9px 13px;background:var(--s2);border-bottom:1px solid var(--border2);font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:2px;display:flex;align-items:center;gap:7px}
+.dr{display:flex;align-items:flex-start;padding:8px 13px;border-bottom:1px solid var(--border2);gap:8px}
+.dr:last-child{border-bottom:none}
+.dk{font-family:var(--mono);font-size:10px;color:var(--text3);width:105px;flex-shrink:0;padding-top:2px}
+.dv{font-family:var(--mono);font-size:12px;color:var(--text);word-break:break-all}
+
+/* ── Verdict ── */
+.verdict{border-radius:var(--r);padding:18px;display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.verdict.pass{background:var(--green-bg);border:1px solid var(--green-b)}
+.verdict.fail{background:var(--red-bg);border:1px solid var(--red-b)}
+.verdict.warn{background:var(--yel-bg);border:1px solid var(--yel-b)}
+.v-icon{font-size:42px;line-height:1;flex-shrink:0}
+.v-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;margin-bottom:4px}
+.verdict.pass .v-label{color:var(--green)}
+.verdict.fail .v-label{color:var(--red)}
+.verdict.warn .v-label{color:var(--yellow)}
+.v-title{font-size:22px;font-weight:900;line-height:1}
+.verdict.pass .v-title{color:var(--green)}
+.verdict.fail .v-title{color:var(--red)}
+.verdict.warn .v-title{color:var(--yellow)}
+.v-sub{font-size:12px;color:var(--text2);margin-top:5px;line-height:1.5}
+
+/* ── Check items ── */
+.checks{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.ci{display:grid;grid-template-columns:20px 1fr;gap:8px;align-items:start;padding:10px 12px;border-radius:var(--r-sm);background:var(--s1);border:1px solid var(--border)}
+.ci.pass{border-color:#0f3320;background:#050f08}
+.ci.fail{border-color:var(--red-b);background:var(--red-bg)}
+.ci.warn{border-color:var(--yel-b);background:var(--yel-bg)}
+.ci-icon{font-size:14px;margin-top:1px}
+.ci-label{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:2px}
+.ci-actual{font-family:var(--mono);font-size:12px;color:var(--text);word-break:break-all}
+.ci.fail .ci-actual{color:var(--red)}
+.ci.warn .ci-actual{color:var(--yellow)}
+.ci-ref{font-size:11px;color:var(--text3);margin-top:3px}
+.ci-ref span{color:var(--text2)}
+
+/* ── Textarea / Input ── */
+.remark-area{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:13px;padding:10px 12px;outline:none;resize:none;line-height:1.6;transition:border-color .15s}
+.remark-area:focus{border-color:var(--gold)}
+.remark-area::placeholder{color:var(--text3)}
+.input-row{display:flex;gap:8px;margin-bottom:12px}
+.inp{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:13px;padding:10px 12px;outline:none;transition:border-color .15s}
+.inp:focus{border-color:var(--gold)}
+.inp::placeholder{color:var(--text3)}
+
+/* ── History ── */
+.hist-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .2s}
+.hist-card:active{border-color:var(--gold)}
+.hist-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.hist-badge{padding:3px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px;flex-shrink:0}
+.hist-badge.pass{background:var(--green-b);color:var(--green)}
+.hist-badge.fail{background:var(--red-b);color:var(--red)}
+.hist-badge.warn{background:var(--yel-b);color:var(--yellow)}
+.hist-model{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-ts{font-family:var(--mono);font-size:10px;color:var(--text3)}
+.hist-meta{display:flex;gap:12px;flex-wrap:wrap}
+.hist-meta span{font-size:11px;color:var(--text2)}
+.hist-meta .lot{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.hist-remark{margin-top:8px;padding:8px 10px;background:var(--yel-bg);border-radius:6px;font-size:12px;color:var(--yellow);border-left:2px solid var(--yellow)}
+
+/* ── Stats ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.stat-box{background:var(--s1);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 10px;text-align:center}
+.stat-num{font-family:var(--mono);font-size:22px;font-weight:700;line-height:1}
+.stat-num.pass{color:var(--green)}
+.stat-num.fail{color:var(--red)}
+.stat-num.total{color:var(--gold)}
+.stat-lbl{font-size:10px;color:var(--text3);margin-top:3px}
+
+/* ── Chips ── */
+.filter-row{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
+.filter-row::-webkit-scrollbar{display:none}
+.chip{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--s1);font-family:var(--mono);font-size:11px;color:var(--text2);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:border-color .15s,color .15s,background .15s}
+.chip.active{border-color:var(--gold);color:var(--gold);background:rgba(232,184,75,.08)}
+
+/* ── Modal ── */
+#modal{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);overflow-y:auto}
+#modal.open{display:block;animation:fadeUp .2s ease}
+.modal-inner{background:var(--s1);border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;margin-top:60px;min-height:calc(100vh - 60px);max-width:480px;margin-left:auto;margin-right:auto;padding:20px 18px 80px}
+.modal-close{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--text2);font-family:var(--mono);font-size:12px;cursor:pointer;margin-bottom:18px;padding:0}
+
+/* ── Step dots ── */
+.step-row{display:flex;align-items:center;gap:6px}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:all .3s}
+.sdot.active{background:var(--gold);transform:scale(1.3)}
+.sdot.done{background:var(--green)}
+
+/* ── Scan steps ── */
+#scan-step0,#scan-step1,#scan-step2,#scan-step3,#scan-step4{display:none}
+#scan-step0.active,#scan-step1.active,#scan-step2.active,#scan-step3.active,#scan-step4.active{display:block}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(40px);background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:10px 18px;border-radius:30px;transition:transform .25s,opacity .25s;z-index:400;white-space:nowrap;max-width:90vw;text-align:center;opacity:0}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ── Setup ── */
+.setup-wrap{padding:40px 24px}
+.setup-logo{width:64px;height:64px;background:var(--gold);border-radius:18px;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:20px;color:#000;margin:0 auto 24px}
+.setup-title{font-size:26px;font-weight:900;text-align:center;margin-bottom:8px}
+.setup-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:32px;line-height:1.7}
+.field-label{font-size:11px;color:var(--text2);margin-bottom:6px;font-family:var(--mono);letter-spacing:.5px}
+
+/* ── Install banner ── */
+#installBanner{
+  display:none;
+  background:linear-gradient(135deg,var(--gold-dim),var(--s3));
+  border:1px solid var(--gold-dim);border-radius:var(--r);
+  padding:14px 16px;margin:0 18px 12px;
+  align-items:center;gap:12px;
+}
+#installBanner.show{display:flex}
+.install-text{flex:1;font-size:12px;color:var(--text2);line-height:1.5}
+.install-text strong{color:var(--gold);display:block;margin-bottom:2px;font-size:13px}
+.btn-install{padding:8px 14px;background:var(--gold);border:none;border-radius:7px;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ══ SETUP ══ -->
+<div id="setupPage" style="display:none">
+  <div class="setup-wrap">
+    <div class="setup-logo">mti</div>
+    <div class="setup-title">라벨 검증 시스템</div>
+    <div class="setup-sub">Film/Tape 입·출고 라벨<br>AI 자동 검증 · 팀 공유 · 이력 관리</div>
+    <div class="field-label">ANTHROPIC API KEY</div>
+    <div class="input-row"><input class="inp" id="keyInp" type="password" placeholder="sk-ant-api03-..." autocomplete="off"></div>
+    <div class="field-label" style="margin-top:4px">검증자 이름</div>
+    <div class="input-row"><input class="inp" id="nameInp" type="text" placeholder="홍길동" autocomplete="off"></div>
+    <button class="btn-gold" onclick="saveSetup()">▶ 시작하기</button>
+  </div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div id="mainApp" style="display:none">
+
+  <!-- PWA 설치 배너 -->
+  <div id="installBanner">
+    <div class="install-text">
+      <strong>📲 앱으로 설치하기</strong>
+      홈 화면에 추가하면 앱처럼 사용 가능
+    </div>
+    <button class="btn-install" onclick="installPWA()">설치</button>
+  </div>
+
+  <!-- ── SCAN PAGE ── -->
+  <div class="page active" id="pageScan">
+    <div class="pg-head">
+      <div class="logo">mti</div>
+      <div>
+        <div class="pg-title">라벨 검증</div>
+        <div class="pg-sub" id="scanUserLabel">—</div>
+      </div>
+      <div style="margin-left:auto">
+        <div class="step-row">
+          <div class="sdot active" id="sd0"></div>
+          <div class="sdot" id="sd1"></div>
+          <div class="sdot" id="sd2"></div>
+          <div class="sdot" id="sd3"></div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+
+      <!-- S0: 기준값 -->
+      <div id="scan-step0" class="active">
+        <div class="sec-label">기준값 설정</div>
+        <div id="refCachedBlock" style="display:none">
+          <div class="data-block" id="refCachedDisplay"></div>
+          <button class="btn-gold" onclick="proceedToLabel()">✓ 이 기준값으로 라벨 검증</button>
+          <button class="btn-ghost" onclick="newRef()">↩ 양식 다시 촬영</button>
+        </div>
+        <div id="refNewBlock">
+          <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">입·출고 현황 양식 문서를 촬영하면 AI가 기준값을 자동 추출합니다.</p>
+          <div class="capture-zone" id="capRef" onclick="triggerFile('fileRef')">
+            <img id="imgRef" style="display:none">
+            <div class="cap-overlay">
+              <div class="cap-icon">📄</div>
+              <div class="cap-hint">양식 문서 촬영</div>
+            </div>
+          </div>
+          <input type="file" id="fileRef" accept="image/*" capture="environment" onchange="handleRef(this)">
+          <div class="loading" id="loadRef"><div class="spinner"></div><div class="loading-text">기준값 추출 중...</div></div>
+        </div>
+      </div>
+
+      <!-- S1: 추출 확인 -->
+      <div id="scan-step1">
+        <div class="sec-label">추출된 기준값 확인</div>
+        <div class="data-block" id="refExtracted"></div>
+        <button class="btn-gold" onclick="confirmRef()">✓ 확인 — 라벨 촬영으로</button>
+        <button class="btn-ghost" onclick="newRef()">↩ 다시 촬영</button>
+      </div>
+
+      <!-- S2: 라벨 촬영 -->
+      <div id="scan-step2">
+        <div class="sec-label">라벨 촬영</div>
+        <div class="capture-zone" id="capLabel" onclick="triggerFile('fileLabel')">
+          <img id="imgLabel" style="display:none">
+          <div class="cap-overlay">
+            <div class="cap-icon">🏷️</div>
+            <div class="cap-hint">라벨 촬영</div>
+          </div>
+        </div>
+        <input type="file" id="fileLabel" accept="image/*" capture="environment" onchange="handleLabel(this)">
+        <div class="loading" id="loadLabel"><div class="spinner"></div><div class="loading-text">라벨 인식 중...</div></div>
+      </div>
+
+      <!-- S3: 라벨 확인 + 특이사항 -->
+      <div id="scan-step3">
+        <div class="sec-label">라벨 인식 결과</div>
+        <div class="data-block" id="labelExtracted"></div>
+        <div style="margin-bottom:12px">
+          <div class="sec-label" style="margin-bottom:8px">특이사항 (선택)</div>
+          <textarea class="remark-area" id="remarkInput" rows="3" placeholder="이상 없음 / 포장 손상 있음 / 기타 메모..."></textarea>
+        </div>
+        <button class="btn-gold" onclick="runVerify()">⚡ 합·불 판정 실행</button>
+        <button class="btn-ghost" onclick="retakeLabel()">↩ 라벨 다시 촬영</button>
+      </div>
+
+      <!-- S4: 결과 -->
+      <div id="scan-step4">
+        <div class="sec-label">판정 결과</div>
+        <div id="verdictBox" class="verdict"></div>
+        <div class="checks" id="checkList"></div>
+        <div id="remarkDisplay" style="margin-bottom:12px"></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:16px" id="resultTs"></div>
+        <button class="btn-gold" onclick="nextLabel()">🏷️ 다음 라벨 검증</button>
+        <button class="btn-ghost" onclick="newRef()">📄 새 양식으로 시작</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── HISTORY PAGE ── -->
+  <div class="page" id="pageHistory">
+    <div class="pg-head">
+      <div class="logo">mti</div>
+      <div>
+        <div class="pg-title">검증 이력</div>
+        <div class="pg-sub" id="histCountLabel">불러오는 중...</div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-num total" id="sTot">—</div><div class="stat-lbl">전체</div></div>
+        <div class="stat-box"><div class="stat-num pass" id="sPass">—</div><div class="stat-lbl">합격</div></div>
+        <div class="stat-box"><div class="stat-num fail" id="sFail">—</div><div class="stat-lbl">불합격</div></div>
+      </div>
+      <div class="filter-row">
+        <div class="chip active" onclick="setFilter(this,'all')">전체</div>
+        <div class="chip" onclick="setFilter(this,'pass')">합격</div>
+        <div class="chip" onclick="setFilter(this,'fail')">불합격</div>
+        <div class="chip" onclick="setFilter(this,'warn')">주의</div>
+        <div class="chip" onclick="setFilter(this,'remark')">특이사항</div>
+      </div>
+      <div class="loading" id="loadHist" style="display:flex"><div class="spinner"></div><div class="loading-text">이력 불러오는 중...</div></div>
+      <div id="histList"></div>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS PAGE ── -->
+  <div class="page" id="pageSettings">
+    <div class="pg-head">
+      <div class="logo">mti</div>
+      <div><div class="pg-title">설정</div><div class="pg-sub">SETTINGS</div></div>
+    </div>
+    <div class="section">
+      <div class="sec-label">내 정보</div>
+      <div class="card card-body" style="margin-bottom:16px">
+        <div class="field-label">검증자 이름</div>
+        <div class="input-row" style="margin-bottom:0">
+          <input class="inp" id="settingName" type="text" placeholder="이름 입력">
+          <button class="btn-sm" onclick="saveName()">저장</button>
+        </div>
+      </div>
+      <div class="sec-label">API 키</div>
+      <div class="card card-body" style="margin-bottom:16px">
+        <div class="field-label">Anthropic API Key</div>
+        <div class="input-row" style="margin-bottom:0">
+          <input class="inp" id="settingKey" type="password" placeholder="sk-ant-api03-...">
+          <button class="btn-sm" onclick="saveKey()">저장</button>
+        </div>
+      </div>
+      <div class="sec-label">앱 정보</div>
+      <div class="card card-body" style="margin-bottom:16px">
+        <div style="font-size:12px;color:var(--text2);line-height:1.8">
+          버전: 1.0.0<br>
+          검증 항목: Model / Lot / Size / Material Code / Mfg Date / Exp Date / 유효 여부<br>
+          데이터: 팀 공유 스토리지 저장
+        </div>
+      </div>
+      <div class="sec-label">데이터 관리</div>
+      <div class="card card-body">
+        <button class="btn-ghost" style="margin-top:0;color:var(--red);border-color:var(--red-b)" onclick="clearAll()">⚠ 전체 이력 삭제</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div id="nav">
+    <button class="nav-btn active" onclick="switchPage('Scan',this)">
+      <div class="nav-icon">📷</div>검증
+    </button>
+    <button class="nav-btn" onclick="switchPage('History',this)">
+      <div class="nav-icon">📋</div>이력
+      <div class="nav-badge" id="navBadge"></div>
+    </button>
+    <button class="nav-btn" onclick="switchPage('Settings',this)">
+      <div class="nav-icon">⚙️</div>설정
+    </button>
+  </div>
+
+</div><!-- /mainApp -->
+
+<!-- Modal -->
+<div id="modal">
+  <div class="modal-inner" id="modalInner"></div>
+</div>
+
+</div><!-- /app -->
+<div id="toast"></div>
+
+<script>
+/* ── State ── */
+let API_KEY  = localStorage.getItem('mti_key')  || '';
+let USERNAME = localStorage.getItem('mti_user') || '';
+let refData  = null;
+let labelData= null;
+let currentFilter = 'all';
+let deferredInstall = null;
+
+/* ── Boot ── */
+window.onload = () => {
+  if (!API_KEY || !USERNAME) {
+    document.getElementById('setupPage').style.display = 'block';
+  } else {
+    bootApp();
+  }
+  registerSW();
+};
+
+function bootApp(){
+  document.getElementById('setupPage').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('scanUserLabel').textContent = USERNAME;
+  document.getElementById('settingName').value = USERNAME;
+  document.getElementById('settingKey').value  = API_KEY;
+  tryLoadCachedRef();
+  loadHistory();
+  updateNavBadge();
+}
+
+function saveSetup(){
+  const k = document.getElementById('keyInp').value.trim();
+  const n = document.getElementById('nameInp').value.trim();
+  if (!k.startsWith('sk-')) { toast('올바른 API 키를 입력하세요'); return; }
+  if (!n) { toast('이름을 입력하세요'); return; }
+  API_KEY = k; USERNAME = n;
+  localStorage.setItem('mti_key', k);
+  localStorage.setItem('mti_user', n);
+  bootApp();
+}
+
+/* ── PWA ── */
+function registerSW(){
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(e => console.log('SW:', e));
+  }
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstall = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').classList.remove('show');
+  toast('✓ 앱 설치 완료!');
+});
+
+function installPWA(){
+  if (deferredInstall) {
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(r => {
+      if (r.outcome === 'accepted') toast('앱 설치 중...');
+      deferredInstall = null;
+      document.getElementById('installBanner').classList.remove('show');
+    });
+  }
+}
+
+/* ── Nav ── */
+function switchPage(name, btn){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page'+name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'History') loadHistory();
+}
+
+/* ── Scan steps ── */
+function showStep(n){
+  for(let i=0;i<=4;i++) document.getElementById('scan-step'+i).classList.toggle('active',i===n);
+  ['sd0','sd1','sd2','sd3'].forEach((id,i)=>{
+    const d=document.getElementById(id);
+    d.classList.remove('active','done');
+    if(i<n) d.classList.add('done');
+    else if(i===n) d.classList.add('active');
+  });
+}
+
+function tryLoadCachedRef(){
+  if(refData){
+    const keys=Object.keys(refData).filter(k=>refData[k]);
+    document.getElementById('refCachedDisplay').innerHTML=`
+      <div class="data-block-head">📋 저장된 기준값</div>
+      ${keys.map(k=>`<div class="dr"><div class="dk">${KEY_MAP[k]||k}</div><div class="dv">${refData[k]}</div></div>`).join('')}`;
+    document.getElementById('refCachedBlock').style.display='block';
+    document.getElementById('refNewBlock').style.display='none';
+  } else {
+    document.getElementById('refCachedBlock').style.display='none';
+    document.getElementById('refNewBlock').style.display='block';
+  }
+  showStep(0);
+}
+function proceedToLabel(){ showStep(2); }
+function confirmRef(){ showStep(2); }
+function newRef(){
+  refData=null;
+  document.getElementById('imgRef').style.display='none';
+  document.getElementById('capRef').classList.remove('filled');
+  document.getElementById('fileRef').value='';
+  tryLoadCachedRef();
+}
+function retakeLabel(){
+  document.getElementById('imgLabel').style.display='none';
+  document.getElementById('capLabel').classList.remove('filled');
+  document.getElementById('fileLabel').value='';
+  labelData=null;
+  showStep(2);
+}
+function nextLabel(){ retakeLabel(); }
+
+/* ── File / Camera ── */
+function triggerFile(id){ document.getElementById(id).click(); }
+function toBase64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=e=>res(e.target.result.split(',')[1]);
+    r.onerror=rej;
+    r.readAsDataURL(file);
+  });
+}
+
+async function handleRef(input){
+  if(!input.files||!input.files[0]) return;
+  const file=input.files[0];
+  document.getElementById('imgRef').src=URL.createObjectURL(file);
+  document.getElementById('imgRef').style.display='block';
+  document.getElementById('capRef').classList.add('filled');
+  document.getElementById('loadRef').style.display='flex';
+  try{
+    const raw=await callClaude(REF_PROMPT, await toBase64(file));
+    refData=parseJSON(raw);
+    renderBlock('refExtracted', refData, '양식 기준값 추출 결과');
+    showStep(1);
+  }catch(e){ toast('추출 실패: '+e.message); }
+  finally{ document.getElementById('loadRef').style.display='none'; }
+}
+
+async function handleLabel(input){
+  if(!input.files||!input.files[0]) return;
+  const file=input.files[0];
+  document.getElementById('imgLabel').src=URL.createObjectURL(file);
+  document.getElementById('imgLabel').style.display='block';
+  document.getElementById('capLabel').classList.add('filled');
+  document.getElementById('loadLabel').style.display='flex';
+  try{
+    const raw=await callClaude(LABEL_PROMPT, await toBase64(file));
+    labelData=parseJSON(raw);
+    renderBlock('labelExtracted', labelData, '라벨 인식 결과');
+    showStep(3);
+  }catch(e){ toast('인식 실패: '+e.message); }
+  finally{ document.getElementById('loadLabel').style.display='none'; }
+}
+
+/* ── Claude API ── */
+const REF_PROMPT=`이 이미지는 Film/Tape 입·출고 현황 양식 문서입니다.
+다음 항목의 기준값을 추출하세요:
+- model_name: Model Name / 모델명
+- lot_no: Lot No / 로트번호
+- size: Size(Roll) (예: W260mm x 200M)
+- material_code: Item/Material Code 숫자만 (예: 3010638)
+- mfg_date: 제조일 YYYY.MM.DD 형식
+- exp_date: 유효기간 만료일 YYYY.MM.DD 형식
+- valid_months: 유효기간 개월수 숫자만
+- product_name: 제품명
+- po_number: P/O 번호
+반드시 JSON만 출력 (다른 텍스트 없이):
+{"model_name":"","lot_no":"","size":"","material_code":"","mfg_date":"","exp_date":"","valid_months":"","product_name":"","po_number":""}`;
+
+const LABEL_PROMPT=`이 이미지는 Film/Tape 라벨입니다.
+다음 항목을 추출하세요:
+- model_name: 모델명 코드
+- lot_no: Lot 번호
+- size: 사이즈
+- material_code: Material Code 숫자만
+- mfg_date: Mfg Date → YYYY.MM.DD
+- exp_date: Exp Date → YYYY.MM.DD
+반드시 JSON만 출력:
+{"model_name":"","lot_no":"","size":"","material_code":"","mfg_date":"","exp_date":""}`;
+
+async function callClaude(prompt, b64){
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+        {type:'text',text:prompt}
+      ]}]
+    })
+  });
+  if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e?.error?.message||`HTTP ${res.status}`); }
+  const d=await res.json();
+  return d.content.map(c=>c.text||'').join('');
+}
+function parseJSON(raw){ return JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+
+/* ── Key map ── */
+const KEY_MAP={model_name:'Model Name',lot_no:'Lot No',size:'Size',material_code:'Material Code',mfg_date:'Mfg Date',exp_date:'Exp Date',valid_months:'Valid(months)',product_name:'Product Name',po_number:'P/O No'};
+
+function renderBlock(id, data, title){
+  const keys=Object.keys(data).filter(k=>data[k]);
+  document.getElementById(id).innerHTML=`
+    <div class="data-block-head">📋 ${title}</div>
+    ${keys.map(k=>`<div class="dr"><div class="dk">${KEY_MAP[k]||k}</div><div class="dv">${data[k]}</div></div>`).join('')}`;
+}
+
+/* ── Verify ── */
+function nd(s){ if(!s)return''; const p=s.trim().replace(/[-\/]/g,'.').split('.'); if(p.length===3)return`${p[0]}.${p[1].padStart(2,'0')}.${p[2].padStart(2,'0')}`; return s.trim(); }
+function ns(s){ return(s||'').replace(/\s+/g,'').toLowerCase().replace('×','x'); }
+function td(s){ const n=nd(s),p=n.split('.'); if(p.length===3)return new Date(+p[0],+p[1]-1,+p[2]); return null; }
+function md(d1,d2){ return(d2.getFullYear()-d1.getFullYear())*12+(d2.getMonth()-d1.getMonth()); }
+
+async function runVerify(){
+  if(!refData||!labelData){ toast('데이터 없음'); return; }
+  const remark=document.getElementById('remarkInput').value.trim();
+  const checks=[];
+  const add=(label,ref,lab,ok,warn)=>checks.push({label,ref,lab,ok,warn:warn||null});
+
+  add('Model Name',refData.model_name,labelData.model_name,(labelData.model_name||'').toUpperCase().trim()===(refData.model_name||'').toUpperCase().trim());
+  add('Lot No',refData.lot_no,labelData.lot_no,(labelData.lot_no||'').trim()===(refData.lot_no||'').trim());
+  add('Size',refData.size,labelData.size,ns(labelData.size)===ns(refData.size));
+  const mr=(refData.material_code||'').replace(/\D/g,''),ml=(labelData.material_code||'').replace(/\D/g,'');
+  add('Material Code',refData.material_code,labelData.material_code,!!(mr&&ml&&ml.includes(mr)));
+  add('Mfg Date',nd(refData.mfg_date),nd(labelData.mfg_date),nd(refData.mfg_date)===nd(labelData.mfg_date));
+  const expR=nd(refData.exp_date),expL=nd(labelData.exp_date);
+  let expWarn=null;
+  if(refData.valid_months){ const d1=td(labelData.mfg_date),d2=td(labelData.exp_date); if(d1&&d2){const diff=md(d1,d2); if(diff!==+refData.valid_months)expWarn=`유효기간 ${diff}개월 (기준: ${refData.valid_months}개월)`;}}
+  add('Exp Date',expR,expL,expR===expL&&!expWarn,expWarn);
+  const today=new Date();today.setHours(0,0,0,0);
+  const expD=td(labelData.exp_date);
+  if(expD){ const expired=expD<today; checks.push({label:'현재 유효 여부',ref:'유효',lab:expired?`만료 (${expL})`:`유효 (${expL})`,ok:!expired,warn:null}); }
+
+  const failCnt=checks.filter(c=>!c.ok&&!c.warn).length;
+  const warnCnt=checks.filter(c=>c.warn).length;
+  const verdict=failCnt>0?'fail':warnCnt>0?'warn':'pass';
+
+  renderVerdict(verdict,checks,failCnt,warnCnt,remark);
+  showStep(4);
+
+  await saveRecord({
+    id:Date.now()+'_'+Math.random().toString(36).slice(2,7),
+    ts:new Date().toISOString(),
+    user:USERNAME, verdict,
+    model:labelData.model_name||'',
+    lot:labelData.lot_no||'',
+    mfg:nd(labelData.mfg_date),
+    exp:nd(labelData.exp_date),
+    remark,
+    checks:checks.map(c=>({label:c.label,ok:c.ok,warn:c.warn,ref:c.ref,lab:c.lab}))
+  });
+  updateNavBadge();
+}
+
+function renderVerdict(verdict,checks,failCnt,warnCnt,remark){
+  const cfg={pass:{icon:'✅',title:'합격  PASS',sub:`전체 ${checks.length}개 항목 이상 없음\n출고 승인 가능합니다.`},fail:{icon:'🚫',title:'불합격  FAIL',sub:`${failCnt}개 항목 불일치\n라벨을 재발행하세요.`},warn:{icon:'⚠️',title:'주의  WARN',sub:`${warnCnt}개 항목 확인 필요\n담당자 검토 후 처리하세요.`}}[verdict];
+  document.getElementById('verdictBox').className=`verdict ${verdict}`;
+  document.getElementById('verdictBox').innerHTML=`<div class="v-icon">${cfg.icon}</div><div><div class="v-label">VERDICT</div><div class="v-title">${cfg.title}</div><div class="v-sub">${cfg.sub}</div></div>`;
+  document.getElementById('checkList').innerHTML=checks.map(c=>{
+    const cls=c.warn?'warn':c.ok?'pass':'fail',ico=c.warn?'⚠️':c.ok?'✅':'❌';
+    const actual=c.warn?`${c.lab||'—'}<br><small style="color:var(--yellow)">${c.warn}</small>`:c.lab||'—';
+    return `<div class="ci ${cls}"><div class="ci-icon">${ico}</div><div><div class="ci-label">${c.label}</div><div class="ci-actual">${actual}</div>${(!c.ok||c.warn)?`<div class="ci-ref">기준: <span>${c.ref||'—'}</span></div>`:''}</div></div>`;
+  }).join('');
+  const rd=document.getElementById('remarkDisplay');
+  rd.innerHTML=remark?`<div style="padding:10px 12px;background:var(--yel-bg);border:1px solid var(--yel-b);border-radius:8px;border-left:3px solid var(--yellow)"><div style="font-size:10px;color:var(--yellow);font-family:var(--mono);margin-bottom:4px">특이사항</div><div style="font-size:13px;color:var(--text2)">${remark}</div></div>`:'';
+  document.getElementById('resultTs').textContent='검증: '+new Date().toLocaleString('ko-KR')+' · '+USERNAME;
+}
+
+/* ── Storage (shared) ── */
+async function saveRecord(rec){
+  try{
+    const list=await loadAll();
+    list.unshift(rec);
+    await window.storage.set('mti_records', JSON.stringify(list), true);
+  }catch(e){ console.error(e); }
+}
+async function loadAll(){
+  try{ const r=await window.storage.get('mti_records',true); return r?JSON.parse(r.value):[]; }
+  catch(e){ return []; }
+}
+
+/* ── History ── */
+let _allRecords=[];
+async function loadHistory(){
+  document.getElementById('loadHist').style.display='flex';
+  document.getElementById('histList').innerHTML='';
+  _allRecords=await loadAll();
+  document.getElementById('loadHist').style.display='none';
+  const tot=_allRecords.length,pass=_allRecords.filter(r=>r.verdict==='pass').length,fail=_allRecords.filter(r=>r.verdict==='fail').length;
+  document.getElementById('sTot').textContent=tot;
+  document.getElementById('sPass').textContent=pass;
+  document.getElementById('sFail').textContent=fail;
+  document.getElementById('histCountLabel').textContent=`총 ${tot}건 · 합격 ${pass} / 불합격 ${fail}`;
+  renderHistList(currentFilter);
+}
+
+function renderHistList(filter){
+  let list=_allRecords;
+  if(filter==='pass') list=list.filter(r=>r.verdict==='pass');
+  else if(filter==='fail') list=list.filter(r=>r.verdict==='fail');
+  else if(filter==='warn') list=list.filter(r=>r.verdict==='warn');
+  else if(filter==='remark') list=list.filter(r=>r.remark&&r.remark.trim());
+  const el=document.getElementById('histList');
+  if(!list.length){ el.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3);font-family:var(--mono);font-size:12px">기록 없음</div>`; return; }
+  el.innerHTML=list.map(r=>{
+    const dt=new Date(r.ts).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const vl={pass:'PASS',fail:'FAIL',warn:'WARN'}[r.verdict]||r.verdict;
+    return `<div class="hist-card" onclick="showDetail('${r.id}')">
+      <div class="hist-top"><div class="hist-badge ${r.verdict}">${vl}</div><div class="hist-model">${r.model||'—'}</div><div class="hist-ts">${dt}</div></div>
+      <div class="hist-meta"><span class="lot">${r.lot||'—'}</span><span>👤 ${r.user||'—'}</span><span>Mfg: ${r.mfg||'—'}</span></div>
+      ${r.remark?`<div class="hist-remark">⚠ ${r.remark}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function showDetail(id){
+  const r=_allRecords.find(x=>x.id===id);
+  if(!r) return;
+  const dt=new Date(r.ts).toLocaleString('ko-KR');
+  const vc={pass:{icon:'✅',title:'합격 PASS'},fail:{icon:'🚫',title:'불합격 FAIL'},warn:{icon:'⚠️',title:'주의 WARN'}}[r.verdict]||{icon:'?',title:r.verdict};
+  document.getElementById('modalInner').innerHTML=`
+    <button class="modal-close" onclick="closeModal()">← 목록으로</button>
+    <div class="verdict ${r.verdict}" style="margin-bottom:16px">
+      <div class="v-icon">${vc.icon}</div>
+      <div><div class="v-label">VERDICT</div><div class="v-title">${vc.title}</div><div class="v-sub">${dt}<br>검증자: ${r.user||'—'}</div></div>
+    </div>
+    <div class="sec-label">검증 항목</div>
+    <div class="checks">
+    ${(r.checks||[]).map(c=>{
+      const cls=c.warn?'warn':c.ok?'pass':'fail',ico=c.warn?'⚠️':c.ok?'✅':'❌';
+      const actual=c.warn?`${c.lab||'—'}<br><small style="color:var(--yellow)">${c.warn}</small>`:c.lab||'—';
+      return `<div class="ci ${cls}"><div class="ci-icon">${ico}</div><div><div class="ci-label">${c.label}</div><div class="ci-actual">${actual}</div>${(!c.ok||c.warn)?`<div class="ci-ref">기준: <span>${c.ref||'—'}</span></div>`:''}</div></div>`;
+    }).join('')}
+    </div>
+    ${r.remark?`<div class="sec-label">특이사항</div><div style="padding:12px 14px;background:var(--yel-bg);border:1px solid var(--yel-b);border-radius:8px;border-left:3px solid var(--yellow);margin-bottom:14px"><div style="font-size:13px;color:var(--text2);line-height:1.6">${r.remark}</div></div>`:''}
+    <div class="sec-label">라벨 정보</div>
+    <div class="data-block">
+      <div class="data-block-head">📋 인식 데이터</div>
+      ${[['Model',r.model],['Lot No',r.lot],['Mfg',r.mfg],['Exp',r.exp]].map(([k,v])=>`<div class="dr"><div class="dk">${k}</div><div class="dv">${v||'—'}</div></div>`).join('')}
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
+
+function setFilter(el,f){
+  currentFilter=f;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderHistList(f);
+}
+
+/* ── Settings ── */
+function saveName(){ const n=document.getElementById('settingName').value.trim(); if(!n){toast('이름 입력');return;} USERNAME=n;localStorage.setItem('mti_user',n);document.getElementById('scanUserLabel').textContent=n;toast('✓ 저장됨'); }
+function saveKey(){ const k=document.getElementById('settingKey').value.trim(); if(!k.startsWith('sk-')){toast('올바른 API 키');return;} API_KEY=k;localStorage.setItem('mti_key',k);toast('✓ 저장됨'); }
+async function clearAll(){
+  if(!confirm('전체 이력을 삭제합니다.\n팀 전체에 영향을 줍니다. 계속할까요?')) return;
+  try{ await window.storage.delete('mti_records',true); _allRecords=[]; toast('✓ 삭제됨'); loadHistory(); updateNavBadge(); }catch(e){ toast('삭제 실패'); }
+}
+
+/* ── Badge ── */
+async function updateNavBadge(){
+  const r=await loadAll();
+  const fail=r.filter(x=>x.verdict==='fail').length;
+  const b=document.getElementById('navBadge');
+  if(fail>0){b.textContent=fail>9?'9+':fail;b.classList.add('show');}
+  else b.classList.remove('show');
+}
+
+/* ── Toast ── */
+let _tt;
+function toast(msg){ const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2800); }
+</script>
+</body>
+</html>

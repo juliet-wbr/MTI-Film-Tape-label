@@ -1,0 +1,25 @@
+{
+  "name": "MTI 라벨 검증 시스템",
+  "short_name": "라벨검증",
+  "description": "Film/Tape 입·출고 라벨 AI 자동 검증 및 팀 공유",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07090d",
+  "theme_color": "#e8b84b",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
