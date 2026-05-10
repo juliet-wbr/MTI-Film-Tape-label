@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MTI 라벨 검증</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#e8b84b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="라벨검증">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#07090d; --s1:#0e1118; --s2:#141820; --s3:#1c2230;
+  --border:#252d3d; --border2:#1a2030;
+  --gold:#e8b84b; --gold-dim:#4a3a18;
+  --green:#27ae60; --green-bg:#071510; --green-b:#0f3320;
+  --red:#e74c3c; --red-bg:#150707; --red-b:#3d1010;
+  --yellow:#f39c12; --yel-bg:#150f04; --yel-b:#3d2a08;
+  --text:#dde4ef; --text2:#8898b0; --text3:#4a5568;
+  --mono:'IBM Plex Mono',monospace; --sans:'Pretendard','Noto Sans KR',sans-serif;
+  --r:14px; --r-sm:9px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overscroll-behavior:none}
+#app{max-width:480px;margin:0 auto;padding-bottom:72px}
+
+/* Nav */
+#nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:rgba(14,17,24,0.96);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);backdrop-filter:blur(16px);z-index:200;padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;border:none;background:none;cursor:pointer;font-family:var(--sans);font-size:10px;color:var(--text3);transition:color .2s;position:relative}
+.nav-btn.active{color:var(--gold)}
+.nav-icon{font-size:20px;line-height:1}
+.nav-badge{position:absolute;top:6px;right:calc(50% - 18px);background:var(--red);color:#fff;font-size:9px;font-family:var(--mono);font-weight:700;width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center}
+.nav-badge.show{display:flex}
+
+/* Pages */
+.page{display:none;animation:fadeUp .25s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Header */
+.pg-head{padding:16px 18px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border2);position:sticky;top:0;z-index:100;background:rgba(7,9,13,0.95);backdrop-filter:blur(12px)}
+.logo{width:32px;height:32px;background:var(--gold);border-radius:8px;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:10px;color:#000;flex-shrink:0}
+.pg-title{font-size:15px;font-weight:700}
+.pg-sub{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:1px}
+
+/* Section */
+.section{padding:14px 16px}
+.sec-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border2)}
+
+/* Form */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.field-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px}
+.inp{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 12px;outline:none;transition:border-color .15s}
+.inp:focus{border-color:var(--gold)}
+.inp::placeholder{color:var(--text3)}
+.inp.ok{border-color:var(--green-b)}
+.inp.ng{border-color:var(--red-b)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Buttons */
+.btn-gold{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:14px;background:var(--gold);border:none;border-radius:var(--r-sm);color:#000;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.8px;cursor:pointer;transition:opacity .15s,transform .1s;margin-top:4px}
+.btn-gold:active{transform:scale(.97);opacity:.85}
+.btn-gold:disabled{opacity:.3;pointer-events:none}
+.btn-ghost{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;background:transparent;border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text2);font-family:var(--mono);font-size:12px;cursor:pointer;margin-top:8px}
+.btn-ghost:active{border-color:var(--gold);color:var(--gold)}
+.btn-sm{padding:7px 12px;background:var(--s3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;white-space:nowrap}
+
+/* Ref saved block */
+.ref-block{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.ref-head{padding:9px 13px;background:var(--s2);border-bottom:1px solid var(--border2);font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:2px;display:flex;align-items:center;justify-content:space-between}
+.ref-row{display:flex;padding:8px 13px;border-bottom:1px solid var(--border2);gap:8px}
+.ref-row:last-child{border-bottom:none}
+.ref-k{font-family:var(--mono);font-size:10px;color:var(--text3);width:100px;flex-shrink:0;padding-top:2px}
+.ref-v{font-family:var(--mono);font-size:12px;color:var(--text);word-break:break-all}
+
+/* Verdict */
+.verdict{border-radius:var(--r);padding:18px;display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.verdict.pass{background:var(--green-bg);border:1px solid var(--green-b)}
+.verdict.fail{background:var(--red-bg);border:1px solid var(--red-b)}
+.verdict.warn{background:var(--yel-bg);border:1px solid var(--yel-b)}
+.v-icon{font-size:44px;line-height:1;flex-shrink:0}
+.v-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;margin-bottom:4px}
+.verdict.pass .v-label{color:var(--green)}
+.verdict.fail .v-label{color:var(--red)}
+.verdict.warn .v-label{color:var(--yellow)}
+.v-title{font-size:22px;font-weight:900}
+.verdict.pass .v-title{color:var(--green)}
+.verdict.fail .v-title{color:var(--red)}
+.verdict.warn .v-title{color:var(--yellow)}
+.v-sub{font-size:12px;color:var(--text2);margin-top:4px;line-height:1.5}
+
+/* Checks */
+.checks{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.ci{display:grid;grid-template-columns:20px 1fr;gap:8px;align-items:start;padding:10px 12px;border-radius:var(--r-sm);background:var(--s1);border:1px solid var(--border)}
+.ci.pass{border-color:#0f3320;background:#050f08}
+.ci.fail{border-color:var(--red-b);background:var(--red-bg)}
+.ci.warn{border-color:var(--yel-b);background:var(--yel-bg)}
+.ci-icon{font-size:14px;margin-top:1px}
+.ci-label{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:2px}
+.ci-actual{font-family:var(--mono);font-size:12px;color:var(--text);word-break:break-all}
+.ci.fail .ci-actual{color:var(--red)}
+.ci.warn .ci-actual{color:var(--yellow)}
+.ci-ref{font-size:11px;color:var(--text3);margin-top:3px}
+.ci-ref span{color:var(--text2)}
+
+/* Textarea */
+.remark-area{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:13px;padding:10px 12px;outline:none;resize:none;line-height:1.6;transition:border-color .15s}
+.remark-area:focus{border-color:var(--gold)}
+.remark-area::placeholder{color:var(--text3)}
+
+/* History */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat-box{background:var(--s1);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 10px;text-align:center}
+.stat-num{font-family:var(--mono);font-size:22px;font-weight:700;line-height:1}
+.stat-num.total{color:var(--gold)}
+.stat-num.pass{color:var(--green)}
+.stat-num.fail{color:var(--red)}
+.stat-lbl{font-size:10px;color:var(--text3);margin-top:3px}
+.filter-row{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
+.filter-row::-webkit-scrollbar{display:none}
+.chip{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--s1);font-family:var(--mono);font-size:11px;color:var(--text2);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
+.chip.active{border-color:var(--gold);color:var(--gold);background:rgba(232,184,75,.08)}
+.hist-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:10px;cursor:pointer;transition:border-color .2s}
+.hist-card:active{border-color:var(--gold)}
+.hist-top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.hist-badge{padding:3px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px;flex-shrink:0}
+.hist-badge.pass{background:var(--green-b);color:var(--green)}
+.hist-badge.fail{background:var(--red-b);color:var(--red)}
+.hist-badge.warn{background:var(--yel-b);color:var(--yellow)}
+.hist-model{font-family:var(--mono);font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-ts{font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap}
+.hist-meta{display:flex;gap:10px;flex-wrap:wrap}
+.hist-meta span{font-size:11px;color:var(--text2)}
+.hist-remark{margin-top:7px;padding:7px 10px;background:var(--yel-bg);border-radius:6px;font-size:12px;color:var(--yellow);border-left:2px solid var(--yellow)}
+
+/* Modal */
+#modal{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);overflow-y:auto}
+#modal.open{display:block;animation:fadeUp .2s ease}
+.modal-inner{background:var(--s1);border-top:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;margin-top:60px;min-height:calc(100vh - 60px);max-width:480px;margin-left:auto;margin-right:auto;padding:18px 16px 80px}
+.modal-close{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--text2);font-family:var(--mono);font-size:12px;cursor:pointer;margin-bottom:16px;padding:0}
+
+/* Steps */
+.step-row{display:flex;gap:5px;margin-left:auto}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:all .3s}
+.sdot.active{background:var(--gold);transform:scale(1.3)}
+.sdot.done{background:var(--green)}
+.scan-step{display:none}
+.scan-step.active{display:block}
+
+/* Setup */
+.setup-wrap{padding:40px 20px}
+.setup-logo{width:60px;height:60px;background:var(--gold);border-radius:16px;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:18px;color:#000;margin:0 auto 20px}
+.setup-title{font-size:24px;font-weight:900;text-align:center;margin-bottom:6px}
+.setup-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:28px;line-height:1.7}
+
+/* Toast */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(40px);background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:10px 18px;border-radius:30px;transition:transform .25s,opacity .25s;z-index:400;white-space:nowrap;max-width:90vw;text-align:center;opacity:0}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* Install banner */
+#installBanner{display:none;background:linear-gradient(135deg,var(--gold-dim),var(--s3));border:1px solid var(--gold-dim);border-radius:var(--r);padding:12px 14px;margin:12px 16px 0;align-items:center;gap:10px}
+#installBanner.show{display:flex}
+.install-text{flex:1;font-size:12px;color:var(--text2);line-height:1.5}
+.install-text strong{color:var(--gold);display:block;font-size:13px;margin-bottom:1px}
+.btn-install{padding:8px 14px;background:var(--gold);border:none;border-radius:7px;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+
+/* divider */
+.divider{height:1px;background:var(--border2);margin:14px 0}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- SETUP -->
+<div id="setupPage" style="display:none">
+  <div class="setup-wrap">
+    <div class="setup-logo">mti</div>
+    <div class="setup-title">라벨 검증 시스템</div>
+    <div class="setup-sub">Film/Tape 입·출고 라벨 검증<br>팀 공유 · 이력 관리</div>
+    <div class="field">
+      <div class="field-label">검증자 이름</div>
+      <input class="inp" id="setupName" type="text" placeholder="홍길동" autocomplete="off">
+    </div>
+    <button class="btn-gold" onclick="saveSetup()">▶ 시작하기</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="mainApp" style="display:none">
+
+  <div id="installBanner">
+    <div class="install-text"><strong>📲 앱으로 설치</strong>홈 화면에 추가하면 앱처럼 사용</div>
+    <button class="btn-install" onclick="installPWA()">설치</button>
+  </div>
+
+  <!-- ── 검증 페이지 ── -->
+  <div class="page active" id="pageScan">
+    <div class="pg-head">
+      <div class="logo">mti</div>
+      <div><div class="pg-title">라벨 검증</div><div class="pg-sub" id="scanUser">—</div></div>
+      <div class="step-row">
+        <div class="sdot active" id="sd0"></div>
+        <div class="sdot" id="sd1"></div>
+        <div class="sdot" id="sd2"></div>
+      </div>
+    </div>
+    <div class="section">
+
+      <!-- STEP 0: 기준값 -->
+      <div class="scan-step active" id="step0">
+        <div class="sec-label">기준값 (양식)</div>
+        <!-- 저장된 기준값 표시 -->
+        <div id="refSavedBlock" style="display:none">
+          <div class="ref-block" id="refSavedDisplay"></div>
+          <button class="btn-gold" onclick="goStep(1)">✓ 이 기준값으로 검증</button>
+          <button class="btn-ghost" onclick="showRefForm()">✏️ 기준값 수정</button>
+        </div>
+        <!-- 기준값 입력 폼 -->
+        <div id="refFormBlock">
+          <div class="grid2">
+            <div class="field"><div class="field-label">MODEL NAME</div><input class="inp" id="r_model" placeholder="MLW-P50-A30-400G"></div>
+            <div class="field"><div class="field-label">LOT NO</div><input class="inp" id="r_lot" placeholder="MWS260Y..."></div>
+            <div class="field"><div class="field-label">SIZE</div><input class="inp" id="r_size" placeholder="W260mm x 200M"></div>
+            <div class="field"><div class="field-label">MATERIAL CODE</div><input class="inp" id="r_mat" placeholder="3010638"></div>
+            <div class="field"><div class="field-label">MFG DATE</div><input class="inp" id="r_mfg" placeholder="2026.03.07"></div>
+            <div class="field"><div class="field-label">EXP DATE</div><input class="inp" id="r_exp" placeholder="2026.09.06"></div>
+          </div>
+          <div class="field"><div class="field-label">유효기간 (개월)</div><input class="inp" id="r_months" placeholder="6" type="number"></div>
+          <button class="btn-gold" onclick="saveRef()">✓ 기준값 저장 후 검증</button>
+        </div>
+      </div>
+
+      <!-- STEP 1: 라벨 입력 -->
+      <div class="scan-step" id="step1">
+        <div class="sec-label">라벨 정보 입력</div>
+        <div class="grid2">
+          <div class="field"><div class="field-label">MODEL NAME</div><input class="inp" id="l_model" placeholder="MLW-P50-A30-400G"></div>
+          <div class="field"><div class="field-label">LOT NO</div><input class="inp" id="l_lot" placeholder="MWS260Y..."></div>
+          <div class="field"><div class="field-label">SIZE</div><input class="inp" id="l_size" placeholder="W260mm x 200M"></div>
+          <div class="field"><div class="field-label">MATERIAL CODE</div><input class="inp" id="l_mat" placeholder="3010638"></div>
+          <div class="field"><div class="field-label">MFG DATE</div><input class="inp" id="l_mfg" placeholder="2026.03.07"></div>
+          <div class="field"><div class="field-label">EXP DATE</div><input class="inp" id="l_exp" placeholder="2026.09.06"></div>
+        </div>
+        <div class="field">
+          <div class="field-label">특이사항 (선택)</div>
+          <textarea class="remark-area" id="remarkInput" rows="2" placeholder="포장 손상 / 기타 메모..."></textarea>
+        </div>
+        <button class="btn-gold" onclick="runVerify()">⚡ 합·불 판정</button>
+        <button class="btn-ghost" onclick="goStep(0)">← 기준값으로</button>
+      </div>
+
+      <!-- STEP 2: 결과 -->
+      <div class="scan-step" id="step2">
+        <div class="sec-label">판정 결과</div>
+        <div id="verdictBox" class="verdict"></div>
+        <div class="checks" id="checkList"></div>
+        <div id="remarkDisplay" style="margin-bottom:12px"></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:16px" id="resultTs"></div>
+        <button class="btn-gold" onclick="nextLabel()">🏷️ 다음 라벨 검증</button>
+        <button class="btn-ghost" onclick="showRefForm(); goStep(0)">📄 기준값 변경</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 이력 페이지 ── -->
+  <div class="page" id="pageHistory">
+    <div class="pg-head">
+      <div class="logo">mti</div>
+      <div><div class="pg-title">검증 이력</div><div class="pg-sub" id="histLabel">—</div></div>
+    </div>
+    <div class="section">
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-num total" id="sTot">0</div><div class="stat-lbl">전체</div></div>
+        <div class="stat-box"><div class="stat-num pass" id="sPass">0</div><div class="stat-lbl">합격</div></div>
+        <div class="stat-box"><div class="stat-num fail" id="sFail">0</div><div class="stat-lbl">불합격</div></div>
+      </div>
+      <div class="filter-row">
+        <div class="chip active" onclick="setFilter(this,'all')">전체</div>
+        <div class="chip" onclick="setFilter(this,'pass')">합격</div>
+        <div class="chip" onclick="setFilter(this,'fail')">불합격</div>
+        <div class="chip" onclick="setFilter(this,'warn')">주의</div>
+        <div class="chip" onclick="setFilter(this,'remark')">특이사항</div>
+      </div>
+      <div id="histList"></div>
+    </div>
+  </div>
+
+  <!-- ── 설정 페이지 ── -->
+  <div class="page" id="pageSettings">
+    <div class="pg-head">
+      <div class="logo">mti</div>
+      <div><div class="pg-title">설정</div><div class="pg-sub">SETTINGS</div></div>
+    </div>
+    <div class="section">
+      <div class="sec-label">내 정보</div>
+      <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:16px">
+        <div class="field-label" style="margin-bottom:6px">검증자 이름</div>
+        <div style="display:flex;gap:8px">
+          <input class="inp" id="settingName" type="text" placeholder="이름 입력" style="margin:0">
+          <button class="btn-sm" onclick="saveName()">저장</button>
+        </div>
+      </div>
+      <div class="sec-label">앱 정보</div>
+      <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:16px">
+        <div style="font-size:12px;color:var(--text2);line-height:1.9;font-family:var(--mono)">
+          버전: 1.0 (무료)<br>
+          검증항목: Model / Lot / Size / Mat.Code / Mfg / Exp / 유효여부<br>
+          저장: 팀 공유 스토리지
+        </div>
+      </div>
+      <div class="sec-label">데이터</div>
+      <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px">
+        <button class="btn-ghost" style="margin-top:0;color:var(--red);border-color:var(--red-b)" onclick="clearAll()">⚠ 전체 이력 삭제</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div id="nav">
+    <button class="nav-btn active" onclick="switchPage('Scan',this)">
+      <div class="nav-icon">✏️</div>검증
+    </button>
+    <button class="nav-btn" onclick="switchPage('History',this)">
+      <div class="nav-icon">📋</div>이력
+      <div class="nav-badge" id="navBadge"></div>
+    </button>
+    <button class="nav-btn" onclick="switchPage('Settings',this)">
+      <div class="nav-icon">⚙️</div>설정
+    </button>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div id="modal"><div class="modal-inner" id="modalInner"></div></div>
+</div>
+<div id="toast"></div>
+
+<script>
+let USERNAME = localStorage.getItem('mti_user') || '';
+let savedRef  = null;
+let currentFilter = 'all';
+let _records = [];
+let deferredInstall = null;
+
+/* ── Boot ── */
+window.onload = () => {
+  if (!USERNAME) {
+    document.getElementById('setupPage').style.display = 'block';
+  } else {
+    boot();
+  }
+  registerSW();
+};
+
+function boot(){
+  document.getElementById('setupPage').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('scanUser').textContent = USERNAME;
+  document.getElementById('settingName').value = USERNAME;
+  loadSavedRef();
+  loadHistory();
+  updateBadge();
+}
+
+function saveSetup(){
+  const n = document.getElementById('setupName').value.trim();
+  if(!n){ toast('이름을 입력하세요'); return; }
+  USERNAME = n;
+  localStorage.setItem('mti_user', n);
+  boot();
+}
+
+/* ── PWA ── */
+function registerSW(){
+  if('serviceWorker' in navigator)
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredInstall = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').classList.remove('show');
+  toast('✓ 앱 설치 완료!');
+});
+function installPWA(){
+  if(deferredInstall){
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(()=>{ deferredInstall=null; document.getElementById('installBanner').classList.remove('show'); });
+  }
+}
+
+/* ── Nav ── */
+function switchPage(name, btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='History') loadHistory();
+}
+
+/* ── Steps ── */
+function goStep(n){
+  document.querySelectorAll('.scan-step').forEach((s,i)=>s.classList.toggle('active',i===n));
+  ['sd0','sd1','sd2'].forEach((id,i)=>{
+    const d=document.getElementById(id);
+    d.classList.remove('active','done');
+    if(i<n) d.classList.add('done');
+    else if(i===n) d.classList.add('active');
+  });
+  window.scrollTo(0,0);
+}
+
+/* ── Ref ── */
+function loadSavedRef(){
+  const raw = localStorage.getItem('mti_ref');
+  if(raw){ savedRef = JSON.parse(raw); showSavedRef(); }
+  else { showRefForm(); }
+}
+
+function showSavedRef(){
+  if(!savedRef){ showRefForm(); return; }
+  const fields = [
+    ['MODEL NAME', savedRef.model],['LOT NO', savedRef.lot],
+    ['SIZE', savedRef.size],['MATERIAL CODE', savedRef.mat],
+    ['MFG DATE', savedRef.mfg],['EXP DATE', savedRef.exp],
+    ['유효기간', savedRef.months ? savedRef.months+'개월' : '']
+  ].filter(([,v])=>v);
+  document.getElementById('refSavedDisplay').innerHTML = `
+    <div class="ref-head"><span>📋 저장된 기준값</span></div>
+    ${fields.map(([k,v])=>`<div class="ref-row"><div class="ref-k">${k}</div><div class="ref-v">${v}</div></div>`).join('')}`;
+  document.getElementById('refSavedBlock').style.display = 'block';
+  document.getElementById('refFormBlock').style.display = 'none';
+}
+
+function showRefForm(){
+  document.getElementById('refSavedBlock').style.display = 'none';
+  document.getElementById('refFormBlock').style.display = 'block';
+  if(savedRef){
+    document.getElementById('r_model').value = savedRef.model||'';
+    document.getElementById('r_lot').value   = savedRef.lot||'';
+    document.getElementById('r_size').value  = savedRef.size||'';
+    document.getElementById('r_mat').value   = savedRef.mat||'';
+    document.getElementById('r_mfg').value   = savedRef.mfg||'';
+    document.getElementById('r_exp').value   = savedRef.exp||'';
+    document.getElementById('r_months').value= savedRef.months||'';
+  }
+}
+
+function saveRef(){
+  const ref = {
+    model: document.getElementById('r_model').value.trim(),
+    lot:   document.getElementById('r_lot').value.trim(),
+    size:  document.getElementById('r_size').value.trim(),
+    mat:   document.getElementById('r_mat').value.trim(),
+    mfg:   document.getElementById('r_mfg').value.trim(),
+    exp:   document.getElementById('r_exp').value.trim(),
+    months:document.getElementById('r_months').value.trim(),
+  };
+  if(!ref.model && !ref.lot){ toast('최소 Model 또는 Lot 입력 필요'); return; }
+  savedRef = ref;
+  localStorage.setItem('mti_ref', JSON.stringify(ref));
+  showSavedRef();
+  goStep(1);
+}
+
+/* ── Verify ── */
+function nd(s){ if(!s)return''; const p=s.trim().replace(/[-\/]/g,'.').split('.'); if(p.length===3)return`${p[0]}.${p[1].padStart(2,'0')}.${p[2].padStart(2,'0')}`; return s.trim(); }
+function ns(s){ return(s||'').replace(/\s+/g,'').toLowerCase().replace('×','x'); }
+function td(s){ const n=nd(s),p=n.split('.'); if(p.length===3)return new Date(+p[0],+p[1]-1,+p[2]); return null; }
+function md(d1,d2){ return(d2.getFullYear()-d1.getFullYear())*12+(d2.getMonth()-d1.getMonth()); }
+
+function runVerify(){
+  if(!savedRef){ toast('기준값을 먼저 입력하세요'); return; }
+  const lab = {
+    model: document.getElementById('l_model').value.trim(),
+    lot:   document.getElementById('l_lot').value.trim(),
+    size:  document.getElementById('l_size').value.trim(),
+    mat:   document.getElementById('l_mat').value.trim(),
+    mfg:   document.getElementById('l_mfg').value.trim(),
+    exp:   document.getElementById('l_exp').value.trim(),
+  };
+  if(!lab.model && !lab.lot){ toast('라벨 정보를 입력하세요'); return; }
+  const remark = document.getElementById('remarkInput').value.trim();
+  const checks = [];
+  const add = (label,ref,lab,ok,warn) => checks.push({label,ref,lab,ok,warn:warn||null});
+
+  if(savedRef.model) add('Model Name', savedRef.model, lab.model, (lab.model||'').toUpperCase()===(savedRef.model||'').toUpperCase());
+  if(savedRef.lot)   add('Lot No', savedRef.lot, lab.lot, (lab.lot||'')===(savedRef.lot||''));
+  if(savedRef.size)  add('Size', savedRef.size, lab.size, ns(lab.size)===ns(savedRef.size));
+  if(savedRef.mat){
+    const mr=(savedRef.mat||'').replace(/\D/g,''), ml=(lab.mat||'').replace(/\D/g,'');
+    add('Material Code', savedRef.mat, lab.mat, !!(mr&&ml&&ml.includes(mr)));
+  }
+  if(savedRef.mfg)   add('Mfg Date', nd(savedRef.mfg), nd(lab.mfg), nd(savedRef.mfg)===nd(lab.mfg));
+  if(savedRef.exp){
+    let expWarn=null;
+    if(savedRef.months){ const d1=td(lab.mfg),d2=td(lab.exp); if(d1&&d2){const diff=md(d1,d2); if(diff!==+savedRef.months)expWarn=`유효기간 ${diff}개월 (기준: ${savedRef.months}개월)`;}}
+    add('Exp Date', nd(savedRef.exp), nd(lab.exp), nd(savedRef.exp)===nd(lab.exp)&&!expWarn, expWarn);
+  }
+  // 현재 유효
+  const expD=td(lab.exp);
+  if(expD){ const today=new Date();today.setHours(0,0,0,0); const expired=expD<today; checks.push({label:'현재 유효',ref:'유효',lab:expired?`만료 (${nd(lab.exp)})`:`유효 (${nd(lab.exp)})`,ok:!expired,warn:null}); }
+
+  const failCnt=checks.filter(c=>!c.ok&&!c.warn).length;
+  const warnCnt=checks.filter(c=>c.warn).length;
+  const verdict=failCnt>0?'fail':warnCnt>0?'warn':'pass';
+
+  renderVerdict(verdict,checks,failCnt,warnCnt,remark);
+  goStep(2);
+  saveRecord({id:Date.now()+'_'+Math.random().toString(36).slice(2,6),ts:new Date().toISOString(),user:USERNAME,verdict,model:lab.model,lot:lab.lot,mfg:nd(lab.mfg),exp:nd(lab.exp),remark,checks});
+  updateBadge();
+}
+
+function renderVerdict(verdict,checks,failCnt,warnCnt,remark){
+  const cfg={pass:{icon:'✅',title:'합격  PASS',sub:`전체 ${checks.length}개 항목 이상 없음\n출고 승인 가능합니다.`},fail:{icon:'🚫',title:'불합격  FAIL',sub:`${failCnt}개 항목 불일치\n라벨을 재발행하세요.`},warn:{icon:'⚠️',title:'주의  WARN',sub:`${warnCnt}개 확인 필요\n담당자 검토 후 처리하세요.`}}[verdict];
+  document.getElementById('verdictBox').className=`verdict ${verdict}`;
+  document.getElementById('verdictBox').innerHTML=`<div class="v-icon">${cfg.icon}</div><div><div class="v-label">VERDICT</div><div class="v-title">${cfg.title}</div><div class="v-sub">${cfg.sub}</div></div>`;
+  document.getElementById('checkList').innerHTML=checks.map(c=>{
+    const cls=c.warn?'warn':c.ok?'pass':'fail',ico=c.warn?'⚠️':c.ok?'✅':'❌';
+    const actual=c.warn?`${c.lab||'—'}<br><small style="color:var(--yellow)">${c.warn}</small>`:c.lab||'—';
+    return `<div class="ci ${cls}"><div class="ci-icon">${ico}</div><div><div class="ci-label">${c.label}</div><div class="ci-actual">${actual}</div>${(!c.ok||c.warn)?`<div class="ci-ref">기준: <span>${c.ref||'—'}</span></div>`:''}</div></div>`;
+  }).join('');
+  const rd=document.getElementById('remarkDisplay');
+  rd.innerHTML=remark?`<div style="padding:10px 12px;background:var(--yel-bg);border:1px solid var(--yel-b);border-radius:8px;border-left:3px solid var(--yellow)"><div style="font-size:10px;color:var(--yellow);font-family:var(--mono);margin-bottom:3px">특이사항</div><div style="font-size:13px;color:var(--text2)">${remark}</div></div>`:'';
+  document.getElementById('resultTs').textContent='검증: '+new Date().toLocaleString('ko-KR')+' · '+USERNAME;
+}
+
+function nextLabel(){
+  ['l_model','l_lot','l_size','l_mat','l_mfg','l_exp'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('remarkInput').value='';
+  goStep(1);
+}
+
+/* ── Storage ── */
+async function saveRecord(rec){
+  try{
+    const list = await loadAll();
+    list.unshift(rec);
+    await window.storage.set('mti_records', JSON.stringify(list), true);
+  }catch(e){ console.error(e); }
+}
+async function loadAll(){
+  try{ const r=await window.storage.get('mti_records',true); return r?JSON.parse(r.value):[]; }
+  catch(e){ return []; }
+}
+
+/* ── History ── */
+async function loadHistory(){
+  _records = await loadAll();
+  const tot=_records.length, pass=_records.filter(r=>r.verdict==='pass').length, fail=_records.filter(r=>r.verdict==='fail').length;
+  document.getElementById('sTot').textContent=tot;
+  document.getElementById('sPass').textContent=pass;
+  document.getElementById('sFail').textContent=fail;
+  document.getElementById('histLabel').textContent=`총 ${tot}건 · 합격 ${pass} / 불합격 ${fail}`;
+  renderList(currentFilter);
+}
+
+function renderList(filter){
+  let list=_records;
+  if(filter==='pass') list=list.filter(r=>r.verdict==='pass');
+  else if(filter==='fail') list=list.filter(r=>r.verdict==='fail');
+  else if(filter==='warn') list=list.filter(r=>r.verdict==='warn');
+  else if(filter==='remark') list=list.filter(r=>r.remark&&r.remark.trim());
+  const el=document.getElementById('histList');
+  if(!list.length){ el.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3);font-family:var(--mono);font-size:12px">기록 없음</div>`; return; }
+  el.innerHTML=list.map(r=>{
+    const dt=new Date(r.ts).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const vl={pass:'PASS',fail:'FAIL',warn:'WARN'}[r.verdict]||r.verdict;
+    return `<div class="hist-card" onclick="showDetail('${r.id}')">
+      <div class="hist-top"><div class="hist-badge ${r.verdict}">${vl}</div><div class="hist-model">${r.model||r.lot||'—'}</div><div class="hist-ts">${dt}</div></div>
+      <div class="hist-meta"><span>${r.lot||'—'}</span><span>👤 ${r.user||'—'}</span><span>Mfg: ${r.mfg||'—'}</span></div>
+      ${r.remark?`<div class="hist-remark">⚠ ${r.remark}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function showDetail(id){
+  const r=_records.find(x=>x.id===id); if(!r) return;
+  const dt=new Date(r.ts).toLocaleString('ko-KR');
+  const vc={pass:{icon:'✅',title:'합격 PASS'},fail:{icon:'🚫',title:'불합격 FAIL'},warn:{icon:'⚠️',title:'주의 WARN'}}[r.verdict]||{icon:'?',title:r.verdict};
+  document.getElementById('modalInner').innerHTML=`
+    <button class="modal-close" onclick="closeModal()">← 목록으로</button>
+    <div class="verdict ${r.verdict}" style="margin-bottom:14px">
+      <div class="v-icon">${vc.icon}</div>
+      <div><div class="v-label">VERDICT</div><div class="v-title">${vc.title}</div><div class="v-sub">${dt}<br>검증자: ${r.user||'—'}</div></div>
+    </div>
+    <div class="sec-label">검증 항목</div>
+    <div class="checks">
+    ${(r.checks||[]).map(c=>{
+      const cls=c.warn?'warn':c.ok?'pass':'fail',ico=c.warn?'⚠️':c.ok?'✅':'❌';
+      return `<div class="ci ${cls}"><div class="ci-icon">${ico}</div><div><div class="ci-label">${c.label}</div><div class="ci-actual">${c.lab||'—'}</div>${(!c.ok||c.warn)?`<div class="ci-ref">기준: <span>${c.ref||'—'}</span></div>`:''}</div></div>`;
+    }).join('')}
+    </div>
+    ${r.remark?`<div class="sec-label">특이사항</div><div style="padding:10px 12px;background:var(--yel-bg);border:1px solid var(--yel-b);border-radius:8px;border-left:3px solid var(--yellow);margin-bottom:14px;font-size:13px;color:var(--text2)">${r.remark}</div>`:''}`;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click',e=>{ if(e.target===document.getElementById('modal'))closeModal(); });
+
+function setFilter(el,f){ currentFilter=f; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); renderList(f); }
+
+/* ── Settings ── */
+function saveName(){ const n=document.getElementById('settingName').value.trim(); if(!n){toast('이름 입력');return;} USERNAME=n;localStorage.setItem('mti_user',n);document.getElementById('scanUser').textContent=n;toast('✓ 저장됨'); }
+async function clearAll(){ if(!confirm('전체 이력 삭제?\n팀 전체에 영향을 줍니다.'))return; try{await window.storage.delete('mti_records',true);_records=[];toast('✓ 삭제됨');loadHistory();updateBadge();}catch(e){toast('실패');} }
+
+/* ── Badge ── */
+async function updateBadge(){
+  const r=await loadAll(); const fail=r.filter(x=>x.verdict==='fail').length;
+  const b=document.getElementById('navBadge');
+  if(fail>0){b.textContent=fail>9?'9+':fail;b.classList.add('show');}else b.classList.remove('show');
+}
+
+/* ── Toast ── */
+let _tt;
+function toast(msg){ const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2500); }
+</script>
+</body>
+</html>
