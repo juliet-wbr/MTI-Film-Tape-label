@@ -415,8 +415,16 @@ function setStep(n){
     else if(i===n) el.classList.add('active');
   });
   window.scrollTo(0,0);
-  if(n===0){ startScanner1(); stopScanner2(); }
-  if(n===1){ stopScanner1(); startScanner2(); }
+  if(n===0){
+    stopScanner2();
+    document.getElementById('qr-reader').innerHTML='';
+    setTimeout(()=>startScanner1(), 300);
+  }
+  if(n===1){
+    stopScanner1();
+    document.getElementById('qr-reader2').innerHTML='';
+    setTimeout(()=>startScanner2(), 300);
+  }
   if(n===2){ stopScanner1(); stopScanner2(); }
 }
 
@@ -453,7 +461,9 @@ function startScanner1(){
 }
 
 function stopScanner1(){
-  if(scanner1){ scanner1.stop().then(()=>{ scanner1.clear(); scanner1=null; }).catch(()=>{ scanner1=null; }); }
+  if(scanner1){
+    scanner1.stop().then(()=>{ scanner1.clear(); scanner1=null; }).catch(()=>{ try{ scanner1.clear(); }catch(e){} scanner1=null; });
+  }
 }
 
 /* ── Scanner 2 (라벨) ── */
@@ -476,7 +486,9 @@ function startScanner2(){
 }
 
 function stopScanner2(){
-  if(scanner2){ scanner2.stop().then(()=>{ scanner2.clear(); scanner2=null; }).catch(()=>{ scanner2=null; }); }
+  if(scanner2){
+    scanner2.stop().then(()=>{ scanner2.clear(); scanner2=null; }).catch(()=>{ try{ scanner2.clear(); }catch(e){} scanner2=null; });
+  }
 }
 
 /* ── 이전 기준값 재사용 ── */
@@ -502,7 +514,8 @@ function hideReuse(){
 
 function backToStep0(){
   labelData=null;
-  setStep(0);
+  stopScanner2();
+  setTimeout(()=>{ setStep(0); }, 400);
 }
 
 /* ── 기준값 요약 표시 ── */
