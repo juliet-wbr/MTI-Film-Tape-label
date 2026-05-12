@@ -10,176 +10,165 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="라벨검증">
 <link rel="apple-touch-icon" href="icon-192.png">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:#07090d; --s1:#0e1118; --s2:#141820; --s3:#1c2230;
-  --border:#252d3d; --border2:#1a2030;
-  --gold:#e8b84b; --gold-dim:#4a3a18;
-  --green:#27ae60; --green-bg:#071510; --green-b:#0f3320;
-  --red:#e74c3c; --red-bg:#150707; --red-b:#3d1010;
-  --yellow:#f39c12; --yel-bg:#150f04; --yel-b:#3d2a08;
-  --text:#dde4ef; --text2:#8898b0; --text3:#4a5568;
-  --mono:'IBM Plex Mono',monospace; --sans:'Pretendard','Noto Sans KR',sans-serif;
-  --r:14px; --r-sm:9px;
+:root{
+  --bg:#07090d;--s1:#0e1118;--s2:#141820;--s3:#1c2230;
+  --border:#252d3d;--border2:#1a2030;
+  --gold:#e8b84b;--gold-dim:#4a3a18;
+  --green:#27ae60;--green-bg:#071510;--green-b:#0f3320;
+  --red:#e74c3c;--red-bg:#150707;--red-b:#3d1010;
+  --yellow:#f39c12;--yel-bg:#150f04;--yel-b:#3d2a08;
+  --text:#dde4ef;--text2:#8898b0;--text3:#4a5568;
+  --mono:'IBM Plex Mono',monospace;--sans:'Pretendard','Noto Sans KR',sans-serif;
+  --r:14px;--r-sm:9px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overscroll-behavior:none}
 #app{max-width:480px;margin:0 auto;padding-bottom:72px}
 
-#nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:rgba(14,17,24,0.96);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);backdrop-filter:blur(16px);z-index:200;padding-bottom:env(safe-area-inset-bottom,0px)}
-.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;border:none;background:none;cursor:pointer;font-family:var(--sans);font-size:10px;color:var(--text3);transition:color .2s;position:relative}
-.nav-btn.active{color:var(--gold)}
-.nav-icon{font-size:20px;line-height:1}
-.nav-badge{position:absolute;top:6px;right:calc(50% - 18px);background:var(--red);color:#fff;font-size:9px;font-family:var(--mono);font-weight:700;width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center}
-.nav-badge.show{display:flex}
+/* Nav */
+#nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:rgba(14,17,24,0.97);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);backdrop-filter:blur(16px);z-index:200;padding-bottom:env(safe-area-inset-bottom,0px)}
+.nb{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;border:none;background:none;cursor:pointer;font-size:10px;color:var(--text3);position:relative;font-family:var(--sans)}
+.nb.active{color:var(--gold)}
+.ni{font-size:20px;line-height:1}
+.nbadge{position:absolute;top:6px;right:calc(50% - 18px);background:var(--red);color:#fff;font-size:9px;font-family:var(--mono);font-weight:700;width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center}
+.nbadge.show{display:flex}
 
-.page{display:none;animation:fadeUp .25s ease}
-.page.active{display:block}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+/* Pages */
+.page{display:none}
+.page.active{display:block;animation:fu .2s ease}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-.pg-head{padding:16px 18px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border2);position:sticky;top:0;z-index:100;background:rgba(7,9,13,0.95);backdrop-filter:blur(12px)}
+/* Header */
+.ph{padding:14px 16px 12px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--border2);position:sticky;top:0;z-index:100;background:rgba(7,9,13,0.96);backdrop-filter:blur(12px)}
 .logo{width:32px;height:32px;background:var(--gold);border-radius:8px;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:10px;color:#000;flex-shrink:0}
-.pg-title{font-size:15px;font-weight:700}
-.pg-sub{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:1px}
+.pt{font-size:15px;font-weight:700}
+.ps{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:1px}
 
-.section{padding:14px 16px}
-.sec-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.sec-label::after{content:'';flex:1;height:1px;background:var(--border2)}
-
-/* QR 스캐너 */
-.qr-wrap{position:relative;border-radius:var(--r);overflow:hidden;background:#000;margin-bottom:10px;aspect-ratio:1}
-#qr-reader,#qr-reader2{width:100%}
-#qr-reader video,#qr-reader2 video{width:100%!important;height:100%!important;object-fit:cover;border-radius:var(--r)}
-#qr-reader img,#qr-reader2 img,
-#qr-reader button,#qr-reader2 button,
-#qr-reader select,#qr-reader2 select{display:none!important}
-.qr-overlay{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center}
-.qr-frame{width:65%;aspect-ratio:1;position:relative}
-.qr-frame::before,.qr-frame::after,.qr-c1,.qr-c2{content:'';position:absolute;width:28px;height:28px;border-color:var(--gold);border-style:solid;opacity:.95}
-.qr-frame::before{top:0;left:0;border-width:3px 0 0 3px}
-.qr-frame::after{top:0;right:0;border-width:3px 3px 0 0}
-.qr-c1{bottom:0;left:0;border-width:0 0 3px 3px}
-.qr-c2{bottom:0;right:0;border-width:0 3px 3px 0}
-.qr-line{position:absolute;left:8px;right:8px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:scan 2s linear infinite;top:8px}
-@keyframes scan{0%{top:8px;opacity:1}90%{top:calc(100% - 8px);opacity:1}100%{top:calc(100% - 8px);opacity:0}}
-.qr-hint{text-align:center;font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5}
+.sec{padding:14px 16px}
+.sl{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sl::after{content:'';flex:1;height:1px;background:var(--border2)}
 
 /* Step indicator */
-.step-indicator{display:flex;align-items:center;gap:0;margin-bottom:16px}
-.si-item{display:flex;flex-direction:column;align-items:center;flex:1;position:relative}
-.si-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--s2);display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text3);transition:all .3s;z-index:1}
-.si-item.active .si-dot{border-color:var(--gold);background:var(--gold);color:#000}
-.si-item.done .si-dot{border-color:var(--green);background:var(--green);color:#fff}
-.si-label{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:5px;text-align:center;letter-spacing:.5px}
-.si-item.active .si-label{color:var(--gold)}
-.si-item.done .si-label{color:var(--green)}
-.si-line{position:absolute;top:14px;left:50%;right:-50%;height:2px;background:var(--border);z-index:0}
-.si-item.done .si-line{background:var(--green)}
-.si-item:last-child .si-line{display:none}
+.steps{display:flex;align-items:center;margin-bottom:16px}
+.si{display:flex;flex-direction:column;align-items:center;flex:1;position:relative}
+.si::after{content:'';position:absolute;top:14px;left:50%;right:-50%;height:2px;background:var(--border);z-index:0}
+.si:last-child::after{display:none}
+.si.done::after{background:var(--green)}
+.sd{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--s2);display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text3);z-index:1;transition:all .3s}
+.si.active .sd{border-color:var(--gold);background:var(--gold);color:#000}
+.si.done .sd{border-color:var(--green);background:var(--green);color:#fff}
+.slb{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:5px;letter-spacing:.5px}
+.si.active .slb{color:var(--gold)}
+.si.done .slb{color:var(--green)}
+
+/* Scanner */
+.scan-wrap{position:relative;width:100%;background:#000;border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+.scan-wrap video{width:100%;display:block;max-height:65vw;object-fit:cover}
+.scan-ui{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center}
+.scan-box{width:55%;aspect-ratio:1;position:relative}
+.scan-box::before,.scan-box::after,.sc3,.sc4{content:'';position:absolute;width:24px;height:24px;border-color:var(--gold);border-style:solid}
+.scan-box::before{top:0;left:0;border-width:3px 0 0 3px}
+.scan-box::after{top:0;right:0;border-width:3px 3px 0 0}
+.sc3{bottom:0;left:0;border-width:0 0 3px 3px}
+.sc4{bottom:0;right:0;border-width:0 3px 3px 0}
+.scan-line{position:absolute;left:6px;right:6px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:sl 1.8s linear infinite}
+@keyframes sl{0%{top:6px;opacity:1}88%{opacity:1}100%{top:calc(100% - 6px);opacity:0}}
+.scan-hint{text-align:center;font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5}
+.scan-status{text-align:center;font-family:var(--mono);font-size:11px;padding:8px;border-radius:6px;margin-bottom:8px}
+.scan-status.scanning{color:var(--gold);background:rgba(232,184,75,.08)}
+.scan-status.error{color:var(--red);background:var(--red-bg)}
 
 /* Data block */
-.data-block{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
-.data-head{padding:9px 13px;background:var(--s2);border-bottom:1px solid var(--border2);font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:2px;display:flex;align-items:center;gap:6px}
-.data-row{display:flex;padding:8px 13px;border-bottom:1px solid var(--border2);gap:8px}
-.data-row:last-child{border-bottom:none}
+.db{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.dh{padding:9px 13px;background:var(--s2);border-bottom:1px solid var(--border2);font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:2px;display:flex;align-items:center;gap:6px}
+.dr{display:flex;padding:8px 13px;border-bottom:1px solid var(--border2);gap:8px}
+.dr:last-child{border-bottom:none}
 .dk{font-family:var(--mono);font-size:10px;color:var(--text3);width:110px;flex-shrink:0;padding-top:2px}
 .dv{font-family:var(--mono);font-size:12px;color:var(--text);word-break:break-all}
 
 /* Buttons */
-.btn-gold{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:14px;background:var(--gold);border:none;border-radius:var(--r-sm);color:#000;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.8px;cursor:pointer;transition:opacity .15s,transform .1s;margin-top:4px}
-.btn-gold:active{transform:scale(.97);opacity:.85}
-.btn-ghost{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;background:transparent;border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text2);font-family:var(--mono);font-size:12px;cursor:pointer;margin-top:8px}
-.btn-ghost:active{border-color:var(--gold);color:var(--gold)}
-.btn-sm{padding:7px 12px;background:var(--s3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;white-space:nowrap}
+.bg{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:14px;background:var(--gold);border:none;border-radius:var(--r-sm);color:#000;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.8px;cursor:pointer;transition:opacity .15s,transform .1s;margin-top:4px}
+.bg:active{transform:scale(.97);opacity:.85}
+.bg:disabled{opacity:.3;pointer-events:none}
+.bgh{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;background:transparent;border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text2);font-family:var(--mono);font-size:12px;cursor:pointer;margin-top:8px}
+.bgh:active{border-color:var(--gold);color:var(--gold)}
+.bsm{padding:7px 12px;background:var(--s3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;white-space:nowrap}
 
 /* Verdict */
-.verdict{border-radius:var(--r);padding:18px;display:flex;align-items:center;gap:14px;margin-bottom:16px}
-.verdict.pass{background:var(--green-bg);border:1px solid var(--green-b)}
-.verdict.fail{background:var(--red-bg);border:1px solid var(--red-b)}
-.verdict.warn{background:var(--yel-bg);border:1px solid var(--yel-b)}
-.v-icon{font-size:44px;line-height:1;flex-shrink:0}
-.v-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;margin-bottom:4px}
-.verdict.pass .v-label{color:var(--green)}
-.verdict.fail .v-label{color:var(--red)}
-.verdict.warn .v-label{color:var(--yellow)}
-.v-title{font-size:22px;font-weight:900}
-.verdict.pass .v-title{color:var(--green)}
-.verdict.fail .v-title{color:var(--red)}
-.verdict.warn .v-title{color:var(--yellow)}
-.v-sub{font-size:12px;color:var(--text2);margin-top:4px;line-height:1.5}
+.vd{border-radius:var(--r);padding:18px;display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.vd.pass{background:var(--green-bg);border:1px solid var(--green-b)}
+.vd.fail{background:var(--red-bg);border:1px solid var(--red-b)}
+.vi{font-size:44px;line-height:1;flex-shrink:0}
+.vlb{font-family:var(--mono);font-size:10px;letter-spacing:2px;margin-bottom:4px}
+.vd.pass .vlb{color:var(--green)}
+.vd.fail .vlb{color:var(--red)}
+.vt{font-size:22px;font-weight:900}
+.vd.pass .vt{color:var(--green)}
+.vd.fail .vt{color:var(--red)}
+.vs{font-size:12px;color:var(--text2);margin-top:4px;line-height:1.5}
 
 /* Checks */
-.checks{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.cl{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
 .ci{display:grid;grid-template-columns:20px 1fr;gap:8px;align-items:start;padding:10px 12px;border-radius:var(--r-sm);background:var(--s1);border:1px solid var(--border)}
 .ci.pass{border-color:#0f3320;background:#050f08}
 .ci.fail{border-color:var(--red-b);background:var(--red-bg)}
-.ci-icon{font-size:14px;margin-top:1px}
-.ci-label{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:2px}
-.ci-actual{font-family:var(--mono);font-size:12px;color:var(--text);word-break:break-all}
-.ci.fail .ci-actual{color:var(--red)}
-.ci-ref{font-size:11px;color:var(--text3);margin-top:3px}
-.ci-ref span{color:var(--text2)}
+.cii{font-size:14px;margin-top:1px}
+.cil{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:2px}
+.cia{font-family:var(--mono);font-size:12px;color:var(--text);word-break:break-all}
+.ci.fail .cia{color:var(--red)}
+.cir{font-size:11px;color:var(--text3);margin-top:3px}
+.cir span{color:var(--text2)}
 
-/* Remark */
-.remark-area{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:13px;padding:10px 12px;outline:none;resize:none;line-height:1.6;transition:border-color .15s}
-.remark-area:focus{border-color:var(--gold)}
-.remark-area::placeholder{color:var(--text3)}
-
-/* History */
-.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.stat-box{background:var(--s1);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 10px;text-align:center}
-.stat-num{font-family:var(--mono);font-size:22px;font-weight:700;line-height:1}
-.stat-num.total{color:var(--gold)} .stat-num.pass{color:var(--green)} .stat-num.fail{color:var(--red)}
-.stat-lbl{font-size:10px;color:var(--text3);margin-top:3px}
-.filter-row{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
-.filter-row::-webkit-scrollbar{display:none}
-.chip{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--s1);font-family:var(--mono);font-size:11px;color:var(--text2);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
-.chip.active{border-color:var(--gold);color:var(--gold);background:rgba(232,184,75,.08)}
-.hist-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:10px;cursor:pointer}
-.hist-card:active{border-color:var(--gold)}
-.hist-top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
-.hist-badge{padding:3px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px;flex-shrink:0}
-.hist-badge.pass{background:var(--green-b);color:var(--green)}
-.hist-badge.fail{background:var(--red-b);color:var(--red)}
-.hist-model{font-family:var(--mono);font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hist-ts{font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap}
-.hist-meta{display:flex;gap:10px;flex-wrap:wrap}
-.hist-meta span{font-size:11px;color:var(--text2)}
-.hist-remark{margin-top:7px;padding:7px 10px;background:var(--yel-bg);border-radius:6px;font-size:12px;color:var(--yellow);border-left:2px solid var(--yellow)}
-
-/* Modal */
-#modal{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);overflow-y:auto}
-#modal.open{display:block;animation:fadeUp .2s ease}
-.modal-inner{background:var(--s1);border-top:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;margin-top:60px;min-height:calc(100vh - 60px);max-width:480px;margin-left:auto;margin-right:auto;padding:18px 16px 80px}
-.modal-close{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--text2);font-family:var(--mono);font-size:12px;cursor:pointer;margin-bottom:16px;padding:0}
-
-/* Setup */
-.setup-wrap{padding:50px 24px}
-.setup-logo{width:64px;height:64px;background:var(--gold);border-radius:18px;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:20px;color:#000;margin:0 auto 20px}
-.setup-title{font-size:26px;font-weight:900;text-align:center;margin-bottom:6px}
-.setup-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:32px;line-height:1.7}
-.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
-.field-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px}
+/* Form */
+.fl{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;margin-bottom:5px}
 .inp{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 12px;outline:none;transition:border-color .15s}
 .inp:focus{border-color:var(--gold)}
 .inp::placeholder{color:var(--text3)}
+.ta{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:13px;padding:10px 12px;outline:none;resize:none;line-height:1.6}
+.ta:focus{border-color:var(--gold)}
+.ta::placeholder{color:var(--text3)}
 
-/* Install */
-#installBanner{display:none;background:linear-gradient(135deg,var(--gold-dim),var(--s3));border:1px solid var(--gold-dim);border-radius:var(--r);padding:12px 14px;margin:12px 16px 0;align-items:center;gap:10px}
-#installBanner.show{display:flex}
-.install-text{flex:1;font-size:12px;color:var(--text2);line-height:1.5}
-.install-text strong{color:var(--gold);display:block;font-size:13px;margin-bottom:1px}
-.btn-install{padding:8px 14px;background:var(--gold);border:none;border-radius:7px;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+/* History */
+.sr{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.sb{background:var(--s1);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 10px;text-align:center}
+.sn{font-family:var(--mono);font-size:22px;font-weight:700;line-height:1}
+.sn.total{color:var(--gold)}.sn.pass{color:var(--green)}.sn.fail{color:var(--red)}
+.slbl{font-size:10px;color:var(--text3);margin-top:3px}
+.fr{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
+.fr::-webkit-scrollbar{display:none}
+.chip{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--s1);font-family:var(--mono);font-size:11px;color:var(--text2);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
+.chip.active{border-color:var(--gold);color:var(--gold);background:rgba(232,184,75,.08)}
+.hc{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:10px;cursor:pointer}
+.hc:active{border-color:var(--gold)}
+.ht{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.hbg{padding:3px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px;flex-shrink:0}
+.hbg.pass{background:var(--green-b);color:var(--green)}
+.hbg.fail{background:var(--red-b);color:var(--red)}
+.hm{font-family:var(--mono);font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hts{font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap}
+.hmt{display:flex;gap:10px;flex-wrap:wrap}
+.hmt span{font-size:11px;color:var(--text2)}
+.hrm{margin-top:7px;padding:7px 10px;background:var(--yel-bg);border-radius:6px;font-size:12px;color:var(--yellow);border-left:2px solid var(--yellow)}
+
+/* Modal */
+#modal{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);overflow-y:auto}
+#modal.open{display:block}
+.mi{background:var(--s1);border-top:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;margin-top:60px;min-height:calc(100vh - 60px);max-width:480px;margin-left:auto;margin-right:auto;padding:18px 16px 80px}
+.mc{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--text2);font-family:var(--mono);font-size:12px;cursor:pointer;margin-bottom:16px;padding:0}
+
+/* Setup */
+.sw{padding:50px 22px}
+.slogo{width:64px;height:64px;background:var(--gold);border-radius:18px;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:20px;color:#000;margin:0 auto 20px}
+.stitle{font-size:26px;font-weight:900;text-align:center;margin-bottom:6px}
+.ssub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:28px;line-height:1.7}
 
 /* Toast */
 #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(40px);background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:10px 18px;border-radius:30px;transition:transform .25s,opacity .25s;z-index:400;white-space:nowrap;max-width:90vw;text-align:center;opacity:0}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 
-/* Scan steps */
-.scan-step{display:none}
-.scan-step.active{display:block}
+.ss{display:none}.ss.active{display:block}
 </style>
 </head>
 <body>
@@ -187,126 +176,97 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-hei
 
 <!-- SETUP -->
 <div id="setupPage" style="display:none">
-  <div class="setup-wrap">
-    <div class="setup-logo">mti</div>
-    <div class="setup-title">라벨 검증 시스템</div>
-    <div class="setup-sub">양식 QR → 라벨 QR 스캔<br>자동 비교 · 합불 판정 · 완전 무료</div>
-    <div class="field">
-      <div class="field-label">검증자 이름</div>
+  <div class="sw">
+    <div class="slogo">mti</div>
+    <div class="stitle">라벨 검증 시스템</div>
+    <div class="ssub">QR / 바코드 스캔으로<br>라벨 자동 검증 · 팀 공유 · 완전 무료</div>
+    <div style="margin-bottom:12px">
+      <div class="fl">검증자 이름</div>
       <input class="inp" id="setupName" type="text" placeholder="홍길동" autocomplete="off">
     </div>
-    <button class="btn-gold" onclick="saveSetup()">▶ 시작하기</button>
+    <button class="bg" onclick="saveSetup()">▶ 시작하기</button>
   </div>
 </div>
 
 <!-- MAIN -->
 <div id="mainApp" style="display:none">
-  <div id="installBanner">
-    <div class="install-text"><strong>📲 앱으로 설치</strong>홈 화면에 추가하면 앱처럼 사용</div>
-    <button class="btn-install" onclick="installPWA()">설치</button>
-  </div>
 
-  <!-- ── 검증 페이지 ── -->
+  <!-- 검증 페이지 -->
   <div class="page active" id="pageScan">
-    <div class="pg-head">
+    <div class="ph">
       <div class="logo">mti</div>
-      <div><div class="pg-title">라벨 검증</div><div class="pg-sub" id="scanUser">—</div></div>
+      <div><div class="pt">라벨 검증</div><div class="ps" id="scanUser">—</div></div>
     </div>
-    <div class="section">
+    <div class="sec">
 
-      <!-- 스텝 인디케이터 -->
-      <div class="step-indicator" id="stepIndicator">
-        <div class="si-item active" id="si0">
-          <div class="si-line"></div>
-          <div class="si-dot">1</div>
-          <div class="si-label">양식 QR</div>
-        </div>
-        <div class="si-item" id="si1">
-          <div class="si-line"></div>
-          <div class="si-dot">2</div>
-          <div class="si-label">라벨 QR</div>
-        </div>
-        <div class="si-item" id="si2">
-          <div class="si-line"></div>
-          <div class="si-dot">3</div>
-          <div class="si-label">결과</div>
-        </div>
+      <!-- 스텝 -->
+      <div class="steps">
+        <div class="si active" id="si0"><div class="sd">1</div><div class="slb">양식 QR</div></div>
+        <div class="si" id="si1"><div class="sd">2</div><div class="slb">라벨 QR</div></div>
+        <div class="si" id="si2"><div class="sd">3</div><div class="slb">결과</div></div>
       </div>
 
-      <!-- STEP 0: 양식 QR 스캔 -->
-      <div class="scan-step active" id="step0">
-        <div class="sec-label">① 양식 QR 스캔</div>
-        <p class="qr-hint">입·출고 현황 양식의 QR코드를 스캔하세요</p>
-        <div class="qr-wrap">
-          <div id="qr-reader"></div>
-          <div class="qr-overlay">
-            <div class="qr-frame">
-              <div class="qr-c1"></div><div class="qr-c2"></div>
-              <div class="qr-line"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 이전 기준값 재사용 옵션 -->
+      <!-- STEP 0: 양식 QR -->
+      <div class="ss active" id="step0">
+        <div class="sl">① 양식 QR / 바코드 스캔</div>
         <div id="reuseBlock" style="display:none">
-          <div class="data-block" id="reuseDisplay"></div>
-          <button class="btn-gold" onclick="reuseRef()">↩ 이 기준값 재사용</button>
-          <button class="btn-ghost" onclick="hideReuse()">📷 새로 스캔</button>
+          <div class="db" id="reuseDisplay"></div>
+          <button class="bg" onclick="reuseRef()">↩ 이전 기준값 재사용</button>
+          <button class="bgh" onclick="startStep0Scan()">📷 새로 스캔</button>
+        </div>
+        <div id="scanBlock0">
+          <div class="scan-status scanning" id="status0">📷 카메라 준비 중...</div>
+          <div class="scan-wrap" id="wrap0">
+            <video id="video0" autoplay playsinline muted></video>
+            <div class="scan-ui"><div class="scan-box"><div class="sc3"></div><div class="sc4"></div><div class="scan-line"></div></div></div>
+          </div>
+          <div class="scan-hint">양식 문서의 QR / 바코드를 네모 안에 맞추세요</div>
         </div>
       </div>
 
-      <!-- STEP 1: 라벨 QR 스캔 -->
-      <div class="scan-step" id="step1">
-        <div class="sec-label">② 라벨 QR 스캔</div>
-
-        <!-- 기준값 요약 -->
-        <div class="data-block" id="refSummary" style="margin-bottom:10px"></div>
-
-        <p class="qr-hint">검증할 라벨의 QR코드를 스캔하세요</p>
-        <div class="qr-wrap">
-          <div id="qr-reader2"></div>
-          <div class="qr-overlay">
-            <div class="qr-frame">
-              <div class="qr-c1"></div><div class="qr-c2"></div>
-              <div class="qr-line"></div>
-            </div>
-          </div>
+      <!-- STEP 1: 라벨 QR -->
+      <div class="ss" id="step1">
+        <div class="sl">② 라벨 QR / 바코드 스캔</div>
+        <div class="db" id="refSummary" style="margin-bottom:10px"></div>
+        <div class="scan-status scanning" id="status1">📷 카메라 준비 중...</div>
+        <div class="scan-wrap" id="wrap1">
+          <video id="video1" autoplay playsinline muted></video>
+          <div class="scan-ui"><div class="scan-box"><div class="sc3"></div><div class="sc4"></div><div class="scan-line"></div></div></div>
         </div>
-        <button class="btn-ghost" onclick="backToStep0()">← 양식 다시 스캔</button>
+        <div class="scan-hint">라벨의 QR / 바코드를 네모 안에 맞추세요</div>
+        <button class="bgh" onclick="goBack()">← 양식 다시 스캔</button>
       </div>
 
       <!-- STEP 2: 결과 -->
-      <div class="scan-step" id="step2">
-        <div class="sec-label">③ 판정 결과</div>
-        <div id="verdictBox" class="verdict"></div>
-        <div class="checks" id="checkList"></div>
-
-        <div class="field" style="margin-bottom:12px">
-          <div class="field-label">특이사항 (선택)</div>
-          <textarea class="remark-area" id="remarkInput" rows="2" placeholder="포장 손상 / 기타 메모..."></textarea>
+      <div class="ss" id="step2">
+        <div class="sl">③ 판정 결과</div>
+        <div id="verdictBox" class="vd"></div>
+        <div class="cl" id="checkList"></div>
+        <div style="margin-bottom:12px">
+          <div class="fl" style="margin-bottom:5px">특이사항 (선택)</div>
+          <textarea class="ta" id="remarkInput" rows="2" placeholder="포장 손상 / 기타 메모..."></textarea>
         </div>
         <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:14px" id="resultTs"></div>
-
-        <button class="btn-gold" onclick="saveAndNext()">💾 저장 후 다음 라벨</button>
-        <button class="btn-ghost" onclick="saveAndNewForm()">📄 저장 후 새 양식</button>
+        <button class="bg" onclick="saveAndNext()">💾 저장 후 다음 라벨</button>
+        <button class="bgh" onclick="saveAndNewForm()">📄 저장 후 새 양식</button>
       </div>
 
     </div>
   </div>
 
-  <!-- ── 이력 페이지 ── -->
+  <!-- 이력 페이지 -->
   <div class="page" id="pageHistory">
-    <div class="pg-head">
+    <div class="ph">
       <div class="logo">mti</div>
-      <div><div class="pg-title">검증 이력</div><div class="pg-sub" id="histLabel">—</div></div>
+      <div><div class="pt">검증 이력</div><div class="ps" id="histLabel">—</div></div>
     </div>
-    <div class="section">
-      <div class="stats-row">
-        <div class="stat-box"><div class="stat-num total" id="sTot">0</div><div class="stat-lbl">전체</div></div>
-        <div class="stat-box"><div class="stat-num pass" id="sPass">0</div><div class="stat-lbl">합격</div></div>
-        <div class="stat-box"><div class="stat-num fail" id="sFail">0</div><div class="stat-lbl">불합격</div></div>
+    <div class="sec">
+      <div class="sr">
+        <div class="sb"><div class="sn total" id="sTot">0</div><div class="slbl">전체</div></div>
+        <div class="sb"><div class="sn pass" id="sPass">0</div><div class="slbl">합격</div></div>
+        <div class="sb"><div class="sn fail" id="sFail">0</div><div class="slbl">불합격</div></div>
       </div>
-      <div class="filter-row">
+      <div class="fr">
         <div class="chip active" onclick="setFilter(this,'all')">전체</div>
         <div class="chip" onclick="setFilter(this,'pass')">합격</div>
         <div class="chip" onclick="setFilter(this,'fail')">불합격</div>
@@ -316,53 +276,79 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-hei
     </div>
   </div>
 
-  <!-- ── 설정 페이지 ── -->
+  <!-- 설정 페이지 -->
   <div class="page" id="pageSettings">
-    <div class="pg-head">
+    <div class="ph">
       <div class="logo">mti</div>
-      <div><div class="pg-title">설정</div><div class="pg-sub">SETTINGS</div></div>
+      <div><div class="pt">설정</div><div class="ps">SETTINGS</div></div>
     </div>
-    <div class="section">
-      <div class="sec-label">내 정보</div>
+    <div class="sec">
+      <div class="sl">내 정보</div>
       <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:16px">
-        <div class="field-label" style="margin-bottom:6px">검증자 이름</div>
+        <div class="fl" style="margin-bottom:6px">검증자 이름</div>
         <div style="display:flex;gap:8px">
           <input class="inp" id="settingName" type="text" style="margin:0">
-          <button class="btn-sm" onclick="saveName()">저장</button>
+          <button class="bsm" onclick="saveName()">저장</button>
         </div>
       </div>
-      <div class="sec-label">데이터</div>
+      <div class="sl">데이터</div>
       <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px">
         <div style="font-size:12px;color:var(--text2);margin-bottom:10px">팀 공유 이력을 전체 삭제합니다.</div>
-        <button class="btn-ghost" style="margin-top:0;color:var(--red);border-color:var(--red-b)" onclick="clearAll()">⚠ 전체 이력 삭제</button>
+        <button class="bgh" style="margin-top:0;color:var(--red);border-color:var(--red-b)" onclick="clearAll()">⚠ 전체 이력 삭제</button>
       </div>
     </div>
   </div>
 
   <div id="nav">
-    <button class="nav-btn active" onclick="switchPage('Scan',this)"><div class="nav-icon">📷</div>스캔</button>
-    <button class="nav-btn" onclick="switchPage('History',this)"><div class="nav-icon">📋</div>이력<div class="nav-badge" id="navBadge"></div></button>
-    <button class="nav-btn" onclick="switchPage('Settings',this)"><div class="nav-icon">⚙️</div>설정</button>
+    <button class="nb active" onclick="switchPage('Scan',this)"><div class="ni">📷</div>스캔</button>
+    <button class="nb" onclick="switchPage('History',this)"><div class="ni">📋</div>이력<div class="nbadge" id="navBadge"></div></button>
+    <button class="nb" onclick="switchPage('Settings',this)"><div class="ni">⚙️</div>설정</button>
   </div>
 </div>
 
-<div id="modal"><div class="modal-inner" id="modalInner"></div></div>
+<div id="modal"><div class="mi" id="modalInner"></div></div>
 </div>
 <div id="toast"></div>
 
 <script>
-let USERNAME = localStorage.getItem('mti_user') || '';
-let refData   = null; // 양식 QR 데이터
-let labelData = null; // 라벨 QR 데이터
+/* ════════════════════════════
+   ZXing 바코드/QR 라이브러리 동적 로드
+════════════════════════════ */
+let ZXing = null;
+(function(){
+  const s = document.createElement('script');
+  s.src = 'https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js';
+  s.onload = () => { ZXing = window.ZXing; onLibReady(); };
+  s.onerror = () => { toast('스캔 라이브러리 로드 실패. 인터넷을 확인해주세요.'); };
+  document.head.appendChild(s);
+})();
+
+/* ════════════════════════════
+   State
+════════════════════════════ */
+let USERNAME  = localStorage.getItem('mti_user') || '';
+let refData   = null;
+let labelData = null;
+let _records  = [];
 let currentFilter = 'all';
-let _records = [];
-let deferredInstall = null;
-let scanner1 = null; // 양식용
-let scanner2 = null; // 라벨용
 let pendingChecks = [];
 let pendingVerdict = '';
+let readers   = [null, null]; // ZXing readers
+let streams   = [null, null]; // camera streams
+let libReady  = false;
 
-/* ── Boot ── */
+function onLibReady(){
+  libReady = true;
+  if(document.getElementById('mainApp').style.display !== 'none'){
+    const saved = localStorage.getItem('mti_last_ref');
+    if(saved){ showReuseOption(JSON.parse(saved)); }
+    else { startScan(0); }
+  }
+}
+
+/* ════════════════════════════
+   Boot
+════════════════════════════ */
 window.onload = () => {
   if(!USERNAME){ document.getElementById('setupPage').style.display='block'; }
   else { boot(); }
@@ -372,42 +358,56 @@ window.onload = () => {
 function boot(){
   document.getElementById('setupPage').style.display='none';
   document.getElementById('mainApp').style.display='block';
-  document.getElementById('scanUser').textContent=USERNAME;
-  document.getElementById('settingName').value=USERNAME;
-  // 이전 기준값 있으면 재사용 옵션 표시
-  const savedRef = localStorage.getItem('mti_last_ref');
-  if(savedRef){ showReuseOption(JSON.parse(savedRef)); }
-  startScanner1();
+  document.getElementById('scanUser').textContent = USERNAME;
+  document.getElementById('settingName').value = USERNAME;
   loadHistory();
   updateBadge();
+  if(libReady) onLibReady();
 }
 
 function saveSetup(){
-  const n=document.getElementById('setupName').value.trim();
-  if(!n){toast('이름을 입력하세요');return;}
-  USERNAME=n; localStorage.setItem('mti_user',n); boot();
+  const n = document.getElementById('setupName').value.trim();
+  if(!n){ toast('이름을 입력하세요'); return; }
+  USERNAME = n;
+  localStorage.setItem('mti_user', n);
+  boot();
 }
 
-/* ── PWA ── */
-function registerSW(){ if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
-window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredInstall=e; document.getElementById('installBanner').classList.add('show'); });
-window.addEventListener('appinstalled',()=>{ document.getElementById('installBanner').classList.remove('show'); toast('✓ 앱 설치 완료!'); });
-function installPWA(){ if(deferredInstall){ deferredInstall.prompt(); deferredInstall.userChoice.then(()=>{ deferredInstall=null; document.getElementById('installBanner').classList.remove('show'); }); } }
+/* ════════════════════════════
+   PWA Service Worker
+════════════════════════════ */
+function registerSW(){
+  if('serviceWorker' in navigator)
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
 
-/* ── Nav ── */
-function switchPage(name,btn){
+/* ════════════════════════════
+   Nav
+════════════════════════════ */
+function switchPage(name, btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
   document.getElementById('page'+name).classList.add('active');
   btn.classList.add('active');
-  if(name==='History') loadHistory();
-  if(name!=='Scan'){ stopScanner1(); stopScanner2(); }
-  else { if(document.getElementById('step0').classList.contains('active')) startScanner1(); }
+  if(name !== 'Scan'){ stopScan(0); stopScan(1); }
+  else {
+    const cur = getCurStep();
+    if(cur === 0) startScan(0);
+    if(cur === 1) startScan(1);
+  }
+  if(name === 'History') loadHistory();
 }
 
-/* ── Step management ── */
+function getCurStep(){
+  for(let i=0;i<3;i++) if(document.getElementById('step'+i).classList.contains('active')) return i;
+  return 0;
+}
+
+/* ════════════════════════════
+   Step
+════════════════════════════ */
 function setStep(n){
-  document.querySelectorAll('.scan-step').forEach((s,i)=>s.classList.toggle('active',i===n));
+  ['step0','step1','step2'].forEach((id,i)=>document.getElementById(id).classList.toggle('active',i===n));
   ['si0','si1','si2'].forEach((id,i)=>{
     const el=document.getElementById(id);
     el.classList.remove('active','done');
@@ -415,196 +415,265 @@ function setStep(n){
     else if(i===n) el.classList.add('active');
   });
   window.scrollTo(0,0);
-  if(n===0){
-    stopScanner2();
-    document.getElementById('qr-reader').innerHTML='';
-    setTimeout(()=>startScanner1(), 300);
+}
+
+/* ════════════════════════════
+   Scanner - ZXing 기반
+   PWA / 브라우저 모두 동일하게 작동
+════════════════════════════ */
+async function startScan(idx){
+  if(!libReady){ toast('라이브러리 로딩 중...'); return; }
+  stopScan(idx); // 기존 정리
+
+  const videoId = 'video'+idx;
+  const statusId = 'status'+idx;
+  const video = document.getElementById(videoId);
+  const statusEl = document.getElementById(statusId);
+
+  try {
+    // 카메라 스트림 얻기
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    streams[idx] = stream;
+    video.srcObject = stream;
+    await video.play();
+    statusEl.className = 'scan-status scanning';
+    statusEl.textContent = '🔍 스캔 중...';
+
+    // ZXing reader
+    const hints = new Map();
+    const formats = [
+      ZXing.BarcodeFormat.QR_CODE,
+      ZXing.BarcodeFormat.CODE_128,
+      ZXing.BarcodeFormat.CODE_39,
+      ZXing.BarcodeFormat.EAN_13,
+      ZXing.BarcodeFormat.DATA_MATRIX,
+    ];
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+
+    const reader = new ZXing.BrowserMultiFormatReader(hints);
+    readers[idx] = reader;
+
+    // decodeFromStream: 스트림 직접 전달 (PWA/브라우저 모두 안정적)
+    reader.decodeFromStream(stream, video, (result, err) => {
+      if(result){
+        const text = result.getText();
+        const data = parseCode(text);
+        if(!data){
+          statusEl.className = 'scan-status error';
+          statusEl.textContent = '⚠ 형식 불일치 — 다시 시도';
+          setTimeout(()=>{
+            statusEl.className = 'scan-status scanning';
+            statusEl.textContent = '🔍 스캔 중...';
+          }, 2000);
+          return;
+        }
+        stopScan(idx);
+        if(idx === 0){
+          refData = data;
+          localStorage.setItem('mti_last_ref', JSON.stringify(data));
+          showRefSummary();
+          setStep(1);
+          setTimeout(()=>startScan(1), 300);
+        } else {
+          labelData = data;
+          runVerify();
+          setStep(2);
+        }
+      }
+    });
+
+  } catch(e){
+    console.error(e);
+    statusEl.className = 'scan-status error';
+    if(e.name === 'NotAllowedError'){
+      statusEl.textContent = '❌ 카메라 권한 필요 — 브라우저 주소창 옆 자물쇠 아이콘 탭 → 카메라 허용';
+    } else {
+      statusEl.textContent = '❌ 카메라 오류: ' + e.message;
+    }
   }
-  if(n===1){
-    stopScanner1();
-    document.getElementById('qr-reader2').innerHTML='';
-    setTimeout(()=>startScanner2(), 300);
+}
+
+function stopScan(idx){
+  if(readers[idx]){
+    try{ readers[idx].reset(); }catch(e){}
+    readers[idx] = null;
   }
-  if(n===2){ stopScanner1(); stopScanner2(); }
-}
-
-/* ── QR 파싱
-   형식: matCode/vendorCode/mfgDateYYYYMMDD/lotNo/qty/unit
-── */
-function parseQR(raw){
-  const parts=raw.trim().split('/');
-  if(parts.length<4) return null;
-  const mfgRaw=parts[2]||'';
-  let mfg='';
-  if(mfgRaw.length===8) mfg=`${mfgRaw.slice(0,4)}.${mfgRaw.slice(4,6)}.${mfgRaw.slice(6,8)}`;
-  return { mat:parts[0]||'', vendor:parts[1]||'', mfg, lot:parts[3]||'', raw };
-}
-
-/* ── Scanner 1 (양식) ── */
-function startScanner1(){
-  if(scanner1) return;
-  scanner1 = new Html5Qrcode('qr-reader');
-  scanner1.start(
-    {facingMode:'environment'},
-    {fps:10, qrbox:{width:220,height:220}},
-    (text)=>{
-      const data=parseQR(text);
-      if(!data){ toast('QR 형식이 맞지 않습니다'); return; }
-      stopScanner1();
-      refData=data;
-      localStorage.setItem('mti_last_ref', JSON.stringify(data));
-      showRefSummary();
-      setStep(1);
-    },
-    ()=>{}
-  ).catch(e=>{ toast('카메라 권한을 허용해주세요'); console.error(e); });
-}
-
-function stopScanner1(){
-  if(scanner1){
-    scanner1.stop().then(()=>{ scanner1.clear(); scanner1=null; }).catch(()=>{ try{ scanner1.clear(); }catch(e){} scanner1=null; });
+  if(streams[idx]){
+    streams[idx].getTracks().forEach(t=>t.stop());
+    streams[idx] = null;
+    const v = document.getElementById('video'+idx);
+    if(v){ v.srcObject=null; }
   }
 }
 
-/* ── Scanner 2 (라벨) ── */
-function startScanner2(){
-  if(scanner2) return;
-  scanner2 = new Html5Qrcode('qr-reader2');
-  scanner2.start(
-    {facingMode:'environment'},
-    {fps:10, qrbox:{width:220,height:220}},
-    (text)=>{
-      const data=parseQR(text);
-      if(!data){ toast('QR 형식이 맞지 않습니다'); return; }
-      stopScanner2();
-      labelData=data;
-      runVerify();
-      setStep(2);
-    },
-    ()=>{}
-  ).catch(e=>{ toast('카메라 권한을 허용해주세요'); console.error(e); });
+/* ════════════════════════════
+   QR / 바코드 파싱
+   형식: matCode/vendorCode/YYYYMMDD/lotNo/qty/unit
+════════════════════════════ */
+function parseCode(raw){
+  if(!raw) return null;
+  const parts = raw.trim().split('/');
+  if(parts.length < 4) return null;
+  const mfgRaw = parts[2]||'';
+  let mfg = '';
+  if(mfgRaw.length === 8)
+    mfg = `${mfgRaw.slice(0,4)}.${mfgRaw.slice(4,6)}.${mfgRaw.slice(6,8)}`;
+  return { mat: parts[0]||'', vendor: parts[1]||'', mfg, lot: parts[3]||'', raw };
 }
 
-function stopScanner2(){
-  if(scanner2){
-    scanner2.stop().then(()=>{ scanner2.clear(); scanner2=null; }).catch(()=>{ try{ scanner2.clear(); }catch(e){} scanner2=null; });
-  }
-}
-
-/* ── 이전 기준값 재사용 ── */
+/* ════════════════════════════
+   Reuse / Back
+════════════════════════════ */
 function showReuseOption(data){
   document.getElementById('reuseDisplay').innerHTML=`
-    <div class="data-head">📋 이전 양식 기준값</div>
-    ${[['Lot No',data.lot],['Material Code',data.mat],['Mfg Date',data.mfg],['Vendor',data.vendor]].filter(([,v])=>v).map(([k,v])=>`<div class="data-row"><div class="dk">${k}</div><div class="dv">${v}</div></div>`).join('')}`;
+    <div class="dh">📋 이전 양식 기준값</div>
+    ${[['Lot No',data.lot],['Material Code',data.mat],['Mfg Date',data.mfg]].filter(([,v])=>v).map(([k,v])=>`<div class="dr"><div class="dk">${k}</div><div class="dv">${v}</div></div>`).join('')}`;
   document.getElementById('reuseBlock').style.display='block';
+  document.getElementById('scanBlock0').style.display='none';
 }
 
 function reuseRef(){
-  const saved=localStorage.getItem('mti_last_ref');
+  const saved = localStorage.getItem('mti_last_ref');
   if(!saved) return;
-  refData=JSON.parse(saved);
+  refData = JSON.parse(saved);
   document.getElementById('reuseBlock').style.display='none';
+  document.getElementById('scanBlock0').style.display='block';
   showRefSummary();
   setStep(1);
+  setTimeout(()=>startScan(1), 200);
 }
 
-function hideReuse(){
+function startStep0Scan(){
   document.getElementById('reuseBlock').style.display='none';
+  document.getElementById('scanBlock0').style.display='block';
+  startScan(0);
 }
 
-function backToStep0(){
-  labelData=null;
-  stopScanner2();
-  setTimeout(()=>{ setStep(0); }, 400);
+function goBack(){
+  stopScan(1);
+  labelData = null;
+  document.getElementById('reuseBlock').style.display='none';
+  document.getElementById('scanBlock0').style.display='block';
+  setStep(0);
+  setTimeout(()=>startScan(0), 200);
 }
 
-/* ── 기준값 요약 표시 ── */
 function showRefSummary(){
   if(!refData) return;
   document.getElementById('refSummary').innerHTML=`
-    <div class="data-head">📋 양식 기준값</div>
-    ${[['Lot No',refData.lot],['Material Code',refData.mat],['Mfg Date',refData.mfg],['Vendor',refData.vendor]].filter(([,v])=>v).map(([k,v])=>`<div class="data-row"><div class="dk">${k}</div><div class="dv">${v}</div></div>`).join('')}`;
+    <div class="dh">📋 양식 기준값</div>
+    ${[['Lot No',refData.lot],['Material Code',refData.mat],['Mfg Date',refData.mfg],['Vendor',refData.vendor]].filter(([,v])=>v).map(([k,v])=>`<div class="dr"><div class="dk">${k}</div><div class="dv">${v}</div></div>`).join('')}`;
 }
 
-/* ── 검증 ── */
+/* ════════════════════════════
+   Verify
+════════════════════════════ */
 function runVerify(){
-  if(!refData||!labelData){toast('데이터 없음');return;}
-  const checks=[];
-  const add=(label,ref,lab,ok)=>checks.push({label,ref,lab,ok});
+  if(!refData||!labelData){ toast('데이터 없음'); return; }
+  const checks = [];
+  const add = (label,ref,lab,ok) => checks.push({label,ref,lab,ok});
 
-  add('Lot No', refData.lot, labelData.lot, refData.lot===labelData.lot);
-  add('Material Code', refData.mat, labelData.mat, refData.mat===labelData.mat);
-  add('Mfg Date', refData.mfg, labelData.mfg, refData.mfg===labelData.mfg);
-  add('Vendor Code', refData.vendor, labelData.vendor, refData.vendor===labelData.vendor);
+  add('Lot No',      refData.lot,    labelData.lot,    refData.lot    === labelData.lot);
+  add('Material Code', refData.mat,  labelData.mat,    refData.mat    === labelData.mat);
+  add('Mfg Date',    refData.mfg,    labelData.mfg,    refData.mfg    === labelData.mfg);
+  add('Vendor Code', refData.vendor, labelData.vendor, refData.vendor === labelData.vendor);
 
-  const failCnt=checks.filter(c=>!c.ok).length;
-  const verdict=failCnt>0?'fail':'pass';
-  pendingChecks=checks; pendingVerdict=verdict;
+  const failCnt = checks.filter(c=>!c.ok).length;
+  const verdict = failCnt > 0 ? 'fail' : 'pass';
+  pendingChecks = checks; pendingVerdict = verdict;
 
-  const cfg={
-    pass:{icon:'✅',title:'합격  PASS',sub:'모든 항목 일치\n출고 승인 가능합니다.'},
-    fail:{icon:'🚫',title:'불합격  FAIL',sub:`${failCnt}개 항목 불일치\n라벨을 재발행하세요.`}
+  const cfg = {
+    pass: { icon:'✅', title:'합격  PASS', sub:'모든 항목 일치\n출고 승인 가능합니다.' },
+    fail: { icon:'🚫', title:'불합격  FAIL', sub:`${failCnt}개 항목 불일치\n라벨을 재발행하세요.` }
   }[verdict];
 
-  document.getElementById('verdictBox').className=`verdict ${verdict}`;
-  document.getElementById('verdictBox').innerHTML=`<div class="v-icon">${cfg.icon}</div><div><div class="v-label">VERDICT</div><div class="v-title">${cfg.title}</div><div class="v-sub">${cfg.sub}</div></div>`;
-  document.getElementById('checkList').innerHTML=checks.map(c=>{
-    const cls=c.ok?'pass':'fail', ico=c.ok?'✅':'❌';
-    return `<div class="ci ${cls}"><div class="ci-icon">${ico}</div><div><div class="ci-label">${c.label}</div><div class="ci-actual">${c.lab||'—'}</div>${!c.ok?`<div class="ci-ref">기준: <span>${c.ref||'—'}</span></div>`:''}</div></div>`;
+  document.getElementById('verdictBox').className = `vd ${verdict}`;
+  document.getElementById('verdictBox').innerHTML = `<div class="vi">${cfg.icon}</div><div><div class="vlb">VERDICT</div><div class="vt">${cfg.title}</div><div class="vs">${cfg.sub}</div></div>`;
+  document.getElementById('checkList').innerHTML = checks.map(c=>{
+    const cls = c.ok?'pass':'fail', ico = c.ok?'✅':'❌';
+    return `<div class="ci ${cls}"><div class="cii">${ico}</div><div><div class="cil">${c.label}</div><div class="cia">${c.lab||'—'}</div>${!c.ok?`<div class="cir">기준: <span>${c.ref||'—'}</span></div>`:''}</div></div>`;
   }).join('');
-  document.getElementById('resultTs').textContent='검증: '+new Date().toLocaleString('ko-KR')+' · '+USERNAME;
-  document.getElementById('remarkInput').value='';
+  document.getElementById('resultTs').textContent = '검증: '+new Date().toLocaleString('ko-KR')+' · '+USERNAME;
+  document.getElementById('remarkInput').value = '';
 }
 
-/* ── 저장 ── */
+/* ════════════════════════════
+   Save
+════════════════════════════ */
 async function saveAndNext(){
   await doSave();
-  // 라벨만 초기화, 기준값 유지
-  labelData=null;
-  document.getElementById('remarkInput').value='';
+  labelData = null;
   showRefSummary();
   setStep(1);
+  setTimeout(()=>startScan(1), 200);
 }
 
 async function saveAndNewForm(){
   await doSave();
-  // 전체 초기화
-  refData=null; labelData=null;
+  refData = null; labelData = null;
+  document.getElementById('reuseBlock').style.display='none';
+  document.getElementById('scanBlock0').style.display='block';
   setStep(0);
-  startScanner1();
+  setTimeout(()=>startScan(0), 200);
 }
 
 async function doSave(){
-  const remark=document.getElementById('remarkInput').value.trim();
-  await saveRecord({
-    id:Date.now()+'_'+Math.random().toString(36).slice(2,6),
-    ts:new Date().toISOString(),
-    user:USERNAME,
-    verdict:pendingVerdict,
-    lot:labelData.lot||'',
-    mat:labelData.mat||'',
-    mfg:labelData.mfg||'',
-    vendor:labelData.vendor||'',
+  const remark = document.getElementById('remarkInput').value.trim();
+  const rec = {
+    id: Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    ts: new Date().toISOString(),
+    user: USERNAME,
+    verdict: pendingVerdict,
+    lot: labelData.lot||'',
+    mat: labelData.mat||'',
+    mfg: labelData.mfg||'',
+    vendor: labelData.vendor||'',
     remark,
-    checks:pendingChecks
-  });
+    checks: pendingChecks
+  };
+  await saveRecord(rec);
   updateBadge();
   toast('✓ 저장 완료');
 }
 
-/* ── Storage ── */
+/* ════════════════════════════
+   Storage — localStorage 기본, shared storage 보조
+   앱/브라우저 모두 동일한 데이터 사용하려면
+   같은 브라우저 탭에서 접속해야 함
+════════════════════════════ */
 async function saveRecord(rec){
-  try{ const list=await loadAll(); list.unshift(rec); await window.storage.set('mti_records',JSON.stringify(list),true); }
-  catch(e){ console.error(e); }
-}
-async function loadAll(){
-  try{ const r=await window.storage.get('mti_records',true); return r?JSON.parse(r.value):[]; }
-  catch(e){ return []; }
+  // 1) localStorage에 항상 저장 (앱/브라우저 공통)
+  const local = JSON.parse(localStorage.getItem('mti_records')||'[]');
+  local.unshift(rec);
+  localStorage.setItem('mti_records', JSON.stringify(local));
+  // 2) shared storage에도 저장 시도 (팀 공유용)
+  try{
+    await window.storage.set('mti_records', JSON.stringify(local), true);
+  }catch(e){}
 }
 
-/* ── History ── */
+async function loadAll(){
+  // shared storage 우선, 없으면 localStorage
+  try{
+    const r = await window.storage.get('mti_records', true);
+    if(r && r.value){
+      const shared = JSON.parse(r.value);
+      // localStorage도 동기화
+      localStorage.setItem('mti_records', JSON.stringify(shared));
+      return shared;
+    }
+  }catch(e){}
+  return JSON.parse(localStorage.getItem('mti_records')||'[]');
+}
+
+/* ════════════════════════════
+   History
+════════════════════════════ */
 async function loadHistory(){
-  _records=await loadAll();
+  _records = await loadAll();
   const tot=_records.length, pass=_records.filter(r=>r.verdict==='pass').length, fail=_records.filter(r=>r.verdict==='fail').length;
   document.getElementById('sTot').textContent=tot;
   document.getElementById('sPass').textContent=pass;
@@ -614,62 +683,83 @@ async function loadHistory(){
 }
 
 function renderList(filter){
-  let list=_records;
-  if(filter==='pass') list=list.filter(r=>r.verdict==='pass');
-  else if(filter==='fail') list=list.filter(r=>r.verdict==='fail');
-  else if(filter==='remark') list=list.filter(r=>r.remark&&r.remark.trim());
-  const el=document.getElementById('histList');
-  if(!list.length){el.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3);font-family:var(--mono);font-size:12px">기록 없음</div>`;return;}
-  el.innerHTML=list.map(r=>{
-    const dt=new Date(r.ts).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-    const vl={pass:'PASS',fail:'FAIL'}[r.verdict]||r.verdict;
-    return `<div class="hist-card" onclick="showDetail('${r.id}')">
-      <div class="hist-top"><div class="hist-badge ${r.verdict}">${vl}</div><div class="hist-model">${r.lot||'—'}</div><div class="hist-ts">${dt}</div></div>
-      <div class="hist-meta"><span>Mat: ${r.mat||'—'}</span><span>Mfg: ${r.mfg||'—'}</span><span>👤 ${r.user||'—'}</span></div>
-      ${r.remark?`<div class="hist-remark">⚠ ${r.remark}</div>`:''}
+  let list = _records;
+  if(filter==='pass')   list=list.filter(r=>r.verdict==='pass');
+  if(filter==='fail')   list=list.filter(r=>r.verdict==='fail');
+  if(filter==='remark') list=list.filter(r=>r.remark&&r.remark.trim());
+  const el = document.getElementById('histList');
+  if(!list.length){ el.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3);font-family:var(--mono);font-size:12px">기록 없음</div>`; return; }
+  el.innerHTML = list.map(r=>{
+    const dt = new Date(r.ts).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `<div class="hc" onclick="showDetail('${r.id}')">
+      <div class="ht"><div class="hbg ${r.verdict}">${r.verdict==='pass'?'PASS':'FAIL'}</div><div class="hm">${r.lot||'—'}</div><div class="hts">${dt}</div></div>
+      <div class="hmt"><span>Mat: ${r.mat||'—'}</span><span>Mfg: ${r.mfg||'—'}</span><span>👤 ${r.user||'—'}</span></div>
+      ${r.remark?`<div class="hrm">⚠ ${r.remark}</div>`:''}
     </div>`;
   }).join('');
 }
 
 function showDetail(id){
-  const r=_records.find(x=>x.id===id); if(!r) return;
-  const dt=new Date(r.ts).toLocaleString('ko-KR');
-  const vc={pass:{icon:'✅',title:'합격 PASS'},fail:{icon:'🚫',title:'불합격 FAIL'}}[r.verdict]||{icon:'?',title:r.verdict};
+  const r = _records.find(x=>x.id===id); if(!r) return;
+  const dt = new Date(r.ts).toLocaleString('ko-KR');
+  const vc = r.verdict==='pass' ? {icon:'✅',title:'합격 PASS'} : {icon:'🚫',title:'불합격 FAIL'};
   document.getElementById('modalInner').innerHTML=`
-    <button class="modal-close" onclick="closeModal()">← 목록으로</button>
-    <div class="verdict ${r.verdict}" style="margin-bottom:14px">
-      <div class="v-icon">${vc.icon}</div>
-      <div><div class="v-label">VERDICT</div><div class="v-title">${vc.title}</div><div class="v-sub">${dt}<br>검증자: ${r.user||'—'}</div></div>
+    <button class="mc" onclick="closeModal()">← 목록으로</button>
+    <div class="vd ${r.verdict}" style="margin-bottom:14px">
+      <div class="vi">${vc.icon}</div>
+      <div><div class="vlb">VERDICT</div><div class="vt">${vc.title}</div><div class="vs">${dt}<br>검증자: ${r.user||'—'}</div></div>
     </div>
-    <div class="sec-label">검증 항목</div>
-    <div class="checks">
+    <div class="sl">검증 항목</div>
+    <div class="cl">
     ${(r.checks||[]).map(c=>{
-      const cls=c.ok?'pass':'fail', ico=c.ok?'✅':'❌';
-      return `<div class="ci ${cls}"><div class="ci-icon">${ico}</div><div><div class="ci-label">${c.label}</div><div class="ci-actual">${c.lab||'—'}</div>${!c.ok?`<div class="ci-ref">기준: <span>${c.ref||'—'}</span></div>`:''}</div></div>`;
+      const cls=c.ok?'pass':'fail',ico=c.ok?'✅':'❌';
+      return `<div class="ci ${cls}"><div class="cii">${ico}</div><div><div class="cil">${c.label}</div><div class="cia">${c.lab||'—'}</div>${!c.ok?`<div class="cir">기준: <span>${c.ref||'—'}</span></div>`:''}</div></div>`;
     }).join('')}
     </div>
-    ${r.remark?`<div class="sec-label">특이사항</div><div style="padding:10px 12px;background:var(--yel-bg);border:1px solid var(--yel-b);border-radius:8px;border-left:3px solid var(--yellow);font-size:13px;color:var(--text2)">${r.remark}</div>`:''}`;
+    ${r.remark?`<div class="sl">특이사항</div><div style="padding:10px 12px;background:var(--yel-bg);border:1px solid var(--yel-b);border-radius:8px;border-left:3px solid var(--yellow);font-size:13px;color:var(--text2)">${r.remark}</div>`:''}`;
   document.getElementById('modal').classList.add('open');
 }
 
 function closeModal(){ document.getElementById('modal').classList.remove('open'); }
-document.getElementById('modal').addEventListener('click',e=>{ if(e.target===document.getElementById('modal'))closeModal(); });
+document.getElementById('modal').addEventListener('click', e=>{ if(e.target===document.getElementById('modal')) closeModal(); });
 function setFilter(el,f){ currentFilter=f; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); renderList(f); }
 
-/* ── Settings ── */
-function saveName(){ const n=document.getElementById('settingName').value.trim(); if(!n){toast('이름 입력');return;} USERNAME=n; localStorage.setItem('mti_user',n); document.getElementById('scanUser').textContent=n; toast('✓ 저장됨'); }
-async function clearAll(){ if(!confirm('전체 이력을 삭제할까요?'))return; try{await window.storage.delete('mti_records',true);_records=[];toast('✓ 삭제됨');loadHistory();updateBadge();}catch(e){toast('실패');} }
-
-/* ── Badge ── */
-async function updateBadge(){
-  const r=await loadAll(); const fail=r.filter(x=>x.verdict==='fail').length;
-  const b=document.getElementById('navBadge');
-  if(fail>0){b.textContent=fail>9?'9+':fail;b.classList.add('show');}else b.classList.remove('show');
+/* ════════════════════════════
+   Settings
+════════════════════════════ */
+function saveName(){
+  const n=document.getElementById('settingName').value.trim();
+  if(!n){toast('이름 입력');return;}
+  USERNAME=n; localStorage.setItem('mti_user',n);
+  document.getElementById('scanUser').textContent=n; toast('✓ 저장됨');
+}
+async function clearAll(){
+  if(!confirm('전체 이력을 삭제할까요?')) return;
+  try{ await window.storage.delete('mti_records',true); }catch(e){}
+  localStorage.removeItem('mti_records');
+  _records=[]; toast('✓ 삭제됨'); loadHistory(); updateBadge();
 }
 
-/* ── Toast ── */
+/* ════════════════════════════
+   Badge
+════════════════════════════ */
+async function updateBadge(){
+  const r = await loadAll();
+  const fail = r.filter(x=>x.verdict==='fail').length;
+  const b = document.getElementById('navBadge');
+  if(fail>0){ b.textContent=fail>9?'9+':fail; b.classList.add('show'); }
+  else b.classList.remove('show');
+}
+
+/* ════════════════════════════
+   Toast
+════════════════════════════ */
 let _tt;
-function toast(msg){ const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2500); }
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),2500);
+}
 </script>
 </body>
 </html>
