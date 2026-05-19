@@ -221,6 +221,25 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-hei
             <div class="scan-ui"><div class="scan-box"><div class="sc3"></div><div class="sc4"></div><div class="scan-line"></div></div></div>
           </div>
           <div class="scan-hint">양식 문서의 QR / 바코드를 네모 안에 맞추세요</div>
+          <!-- 양식 사진 촬영 -->
+          <div style="margin-bottom:12px">
+            <div class="fl" style="margin-bottom:5px">양식 사진 촬영 (확인용)</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <label style="flex:1;padding:10px;background:var(--s2);border:1px dashed var(--border);border-radius:var(--r-sm);text-align:center;cursor:pointer;font-size:12px;color:var(--text2)">
+                📸 사진 선택 / 촬영
+                <input type="file" id="formPhoto" accept="image/*" capture="environment" style="display:none" onchange="previewFormPhoto(this)">
+              </label>
+              <div id="formPhotoThumb" style="display:none;width:60px;height:60px;border-radius:8px;overflow:hidden;flex-shrink:0">
+                <img id="formPhotoImg" style="width:100%;height:100%;object-fit:cover">
+              </div>
+            </div>
+          </div>
+          <!-- Model명 입력 -->
+          <div style="margin-top:4px">
+            <div class="fl" style="margin-bottom:5px">MODEL NAME (직접 입력)</div>
+            <input class="inp" id="modelInput" type="text" placeholder="예) MSSC-PT3820S-300G" autocomplete="off">
+            <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:5px">Lot·날짜는 QR 스캔 후 자동 입력됩니다</div>
+          </div>
         </div>
       </div>
 
@@ -242,6 +261,11 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-hei
         <div class="sl">③ 판정 결과</div>
         <div id="verdictBox" class="vd"></div>
         <div class="cl" id="checkList"></div>
+        <!-- 양식 사진 확인 -->
+        <div id="formPhotoResult" style="display:none;margin-bottom:12px">
+          <div class="sl" style="margin-bottom:8px">양식 사진</div>
+          <img id="formPhotoResultImg" style="width:100%;border-radius:var(--r);border:1px solid var(--border)">
+        </div>
         <div style="margin-bottom:12px">
           <div class="fl" style="margin-bottom:5px">특이사항 (선택)</div>
           <textarea class="ta" id="remarkInput" rows="2" placeholder="포장 손상 / 기타 메모..."></textarea>
@@ -473,7 +497,8 @@ async function startScan(idx){
         stopScan(idx);
         if(idx === 0){
           refData = data;
-          localStorage.setItem('mti_last_ref', JSON.stringify(data));
+          refData.model = document.getElementById('modelInput').value.trim();
+          localStorage.setItem('mti_last_ref', JSON.stringify(refData));
           showRefSummary();
           setStep(1);
           setTimeout(()=>startScan(1), 300);
@@ -510,18 +535,37 @@ function stopScan(idx){
 }
 
 /* ════════════════════════════
-   QR / 바코드 파싱
-   형식: matCode/vendorCode/YYYYMMDD/lotNo/qty/unit
+   QR / 바코드 파싱 — 두 가지 형식 자동 감지
+
+   형식A: matCode/vendorCode/YYYYMMDD/lotNo/...
+     예) 3010638/0000041037/20200901/MWS260Y200901A001/1/Roll
+
+   형식B: lotNo/size/qty/MfgDate/ExpDate
+     예) MSSC066Y260325A001/W66mmX50M/01Rolls/Mar.25th,2026/Mar.24th,2027
 ════════════════════════════ */
 function parseCode(raw){
   if(!raw) return null;
   const parts = raw.trim().split('/');
-  if(parts.length < 4) return null;
-  const mfgRaw = parts[2]||'';
-  let mfg = '';
-  if(mfgRaw.length === 8)
-    mfg = `${mfgRaw.slice(0,4)}.${mfgRaw.slice(4,6)}.${mfgRaw.slice(6,8)}`;
-  return { mat: parts[0]||'', vendor: parts[1]||'', mfg, lot: parts[3]||'', raw };
+  if(parts.length < 3) return null;
+
+  // 날짜 변환: Mar.25th,2026 또는 YYYYMMDD → 2026.03.25
+  const monthMap={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+  function toDate(s){
+    if(!s) return '';
+    const m=s.match(/([a-zA-Z]{3})\.?(\d{1,2})(?:st|nd|rd|th)?,(\d{4})/);
+    if(m) return `${m[3]}.${monthMap[m[1].toLowerCase()]||'??'}.${m[2].padStart(2,'0')}`;
+    if(/^\d{8}$/.test(s.trim())){const d=s.trim();return`${d.slice(0,4)}.${d.slice(4,6)}.${d.slice(6,8)}`;}
+    return s.trim();
+  }
+
+  // 형식 판별: 첫 항목이 숫자만 → 형식A, 아니면 형식B
+  if(/^\d+$/.test(parts[0].trim())){
+    // 형식A: matCode/vendorCode/YYYYMMDD/lotNo
+    return { lot: parts[3]||'', mfg: toDate(parts[2]), mat: parts[0], vendor: parts[1], raw };
+  } else {
+    // 형식B: lotNo/size/qty/MfgDate/ExpDate
+    return { lot: parts[0]||'', mfg: toDate(parts[3]), size: parts[1], exp: toDate(parts[4]||''), raw };
+  }
 }
 
 /* ════════════════════════════
@@ -530,7 +574,7 @@ function parseCode(raw){
 function showReuseOption(data){
   document.getElementById('reuseDisplay').innerHTML=`
     <div class="dh">📋 이전 양식 기준값</div>
-    ${[['Lot No',data.lot],['Material Code',data.mat],['Mfg Date',data.mfg]].filter(([,v])=>v).map(([k,v])=>`<div class="dr"><div class="dk">${k}</div><div class="dv">${v}</div></div>`).join('')}`;
+    ${[['Model Name',data.model],['Lot No',data.lot],['Mfg Date',data.mfg]].filter(([,v])=>v).map(([k,v])=>`<div class="dr"><div class="dk">${k}</div><div class="dv">${v}</div></div>`).join('')}`;
   document.getElementById('reuseBlock').style.display='block';
   document.getElementById('scanBlock0').style.display='none';
 }
@@ -539,11 +583,12 @@ function reuseRef(){
   const saved = localStorage.getItem('mti_last_ref');
   if(!saved) return;
   refData = JSON.parse(saved);
+  if(refData.model) document.getElementById('modelInput').value = refData.model;
   document.getElementById('reuseBlock').style.display='none';
   document.getElementById('scanBlock0').style.display='block';
   showRefSummary();
   setStep(1);
-  setTimeout(()=>startScan(1), 200);
+  setTimeout(()=>startScan(1), 300);
 }
 
 function startStep0Scan(){
@@ -561,43 +606,83 @@ function goBack(){
   setTimeout(()=>startScan(0), 200);
 }
 
-function showRefSummary(){
+/* ════════════════════════════
+   양식 사진 처리
+════════════════════════════ */
+let formPhotoBase64 = null;
+
+function previewFormPhoto(input){
+  if(!input.files||!input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    formPhotoBase64 = e.target.result;
+    document.getElementById('formPhotoImg').src = formPhotoBase64;
+    document.getElementById('formPhotoThumb').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function showFormPhotoInResult(){
+  if(formPhotoBase64){
+    document.getElementById('formPhotoResultImg').src = formPhotoBase64;
+    document.getElementById('formPhotoResult').style.display = 'block';
+  } else {
+    document.getElementById('formPhotoResult').style.display = 'none';
+  }
+}
   if(!refData) return;
   document.getElementById('refSummary').innerHTML=`
     <div class="dh">📋 양식 기준값</div>
-    ${[['Lot No',refData.lot],['Material Code',refData.mat],['Mfg Date',refData.mfg],['Vendor',refData.vendor]].filter(([,v])=>v).map(([k,v])=>`<div class="dr"><div class="dk">${k}</div><div class="dv">${v}</div></div>`).join('')}`;
+    ${[['Model Name',refData.model],['Lot No',refData.lot],['Mfg Date',refData.mfg]].filter(([,v])=>v).map(([k,v])=>`<div class="dr"><div class="dk">${k}</div><div class="dv">${v}</div></div>`).join('')}`;
 }
 
 /* ════════════════════════════
-   Verify
+   Verify — Model / Lot / Mfg Date 3가지 비교
 ════════════════════════════ */
 function runVerify(){
   if(!refData||!labelData){ toast('데이터 없음'); return; }
   const checks = [];
   const add = (label,ref,lab,ok) => checks.push({label,ref,lab,ok});
 
-  add('Lot No',      refData.lot,    labelData.lot,    refData.lot    === labelData.lot);
-  add('Material Code', refData.mat,  labelData.mat,    refData.mat    === labelData.mat);
-  add('Mfg Date',    refData.mfg,    labelData.mfg,    refData.mfg    === labelData.mfg);
-  add('Vendor Code', refData.vendor, labelData.vendor, refData.vendor === labelData.vendor);
+  // Model Name (양식에서 직접 입력한 값 vs 라벨 QR의 lot 앞부분 or 별도 없음)
+  // Model은 라벨 QR에 없으므로 ref만 표시하고 수동 확인
+  if(refData.model){
+    checks.push({label:'Model Name', ref:refData.model, lab:'QR에 없음 — 육안 확인', ok:null, manual:true});
+  }
 
-  const failCnt = checks.filter(c=>!c.ok).length;
+  // Lot No
+  add('Lot No', refData.lot, labelData.lot, refData.lot === labelData.lot);
+
+  // Mfg Date
+  add('Mfg Date', refData.mfg, labelData.mfg, refData.mfg === labelData.mfg);
+
+  const failCnt = checks.filter(c=>c.ok===false).length;
   const verdict = failCnt > 0 ? 'fail' : 'pass';
   pendingChecks = checks; pendingVerdict = verdict;
 
   const cfg = {
-    pass: { icon:'✅', title:'합격  PASS', sub:'모든 항목 일치\n출고 승인 가능합니다.' },
+    pass: { icon:'✅', title:'합격  PASS', sub:'Lot · 날짜 일치\n모델명 육안 확인 후 승인하세요.' },
     fail: { icon:'🚫', title:'불합격  FAIL', sub:`${failCnt}개 항목 불일치\n라벨을 재발행하세요.` }
   }[verdict];
 
   document.getElementById('verdictBox').className = `vd ${verdict}`;
   document.getElementById('verdictBox').innerHTML = `<div class="vi">${cfg.icon}</div><div><div class="vlb">VERDICT</div><div class="vt">${cfg.title}</div><div class="vs">${cfg.sub}</div></div>`;
   document.getElementById('checkList').innerHTML = checks.map(c=>{
-    const cls = c.ok?'pass':'fail', ico = c.ok?'✅':'❌';
-    return `<div class="ci ${cls}"><div class="cii">${ico}</div><div><div class="cil">${c.label}</div><div class="cia">${c.lab||'—'}</div>${!c.ok?`<div class="cir">기준: <span>${c.ref||'—'}</span></div>`:''}</div></div>`;
+    const cls = c.manual ? 'warn' : c.ok ? 'pass' : 'fail';
+    const ico = c.manual ? '👁️' : c.ok ? '✅' : '❌';
+    return `<div class="ci ${cls}" style="${c.manual?'border-color:var(--yel-b);background:var(--yel-bg)':''}">
+      <div class="cii">${ico}</div>
+      <div>
+        <div class="cil">${c.label}</div>
+        <div class="cia" style="${c.manual?'color:var(--yellow)':''}">${c.lab||'—'}</div>
+        <div class="cir">기준: <span>${c.ref||'—'}</span></div>
+      </div>
+    </div>`;
   }).join('');
   document.getElementById('resultTs').textContent = '검증: '+new Date().toLocaleString('ko-KR')+' · '+USERNAME;
   document.getElementById('remarkInput').value = '';
+  showFormPhotoInResult();
 }
 
 /* ════════════════════════════
@@ -614,6 +699,9 @@ async function saveAndNext(){
 async function saveAndNewForm(){
   await doSave();
   refData = null; labelData = null;
+  formPhotoBase64 = null;
+  document.getElementById('formPhoto').value = '';
+  document.getElementById('formPhotoThumb').style.display = 'none';
   document.getElementById('reuseBlock').style.display='none';
   document.getElementById('scanBlock0').style.display='block';
   setStep(0);
@@ -631,6 +719,8 @@ async function doSave(){
     mat: labelData.mat||'',
     mfg: labelData.mfg||'',
     vendor: labelData.vendor||'',
+    model: refData.model||'',
+    formPhoto: formPhotoBase64||null,
     remark,
     checks: pendingChecks
   };
@@ -716,6 +806,7 @@ function showDetail(id){
       return `<div class="ci ${cls}"><div class="cii">${ico}</div><div><div class="cil">${c.label}</div><div class="cia">${c.lab||'—'}</div>${!c.ok?`<div class="cir">기준: <span>${c.ref||'—'}</span></div>`:''}</div></div>`;
     }).join('')}
     </div>
+    ${r.formPhoto?`<div class="sl">양식 사진</div><img src="${r.formPhoto}" style="width:100%;border-radius:var(--r);border:1px solid var(--border);margin-bottom:14px">`:''}
     ${r.remark?`<div class="sl">특이사항</div><div style="padding:10px 12px;background:var(--yel-bg);border:1px solid var(--yel-b);border-radius:8px;border-left:3px solid var(--yellow);font-size:13px;color:var(--text2)">${r.remark}</div>`:''}`;
   document.getElementById('modal').classList.add('open');
 }
